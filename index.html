@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>青萍</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="is-bubble">
+    <svg class="qingping-symbols" aria-hidden="true">
+      <symbol id="qp-windLeaf" viewBox="0 0 48 48">
+        <path class="wind-line" d="M6 18c6-5 13-7 21-5"/>
+        <path class="wind-line wind-line-2" d="M4 28c8-4 16-4 25-1"/>
+        <path class="leaf-fill" d="M17 28c5-17 23-18 28-5-7 11-21 12-28 5Z"/>
+        <path class="leaf-vein" d="M20 28c7-4 13-6 22-5"/>
+      </symbol>
+      <symbol id="qp-happy" viewBox="0 0 48 48">
+        <circle class="mood-face" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M17 21h.1M31 21h.1M18 28c4 5 9 5 13 0"/>
+      </symbol>
+      <symbol id="qp-sad" viewBox="0 0 48 48">
+        <circle class="mood-face" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M17 21h.1M31 21h.1M19 32c4-4 8-4 12 0"/>
+        <path class="dew-shine" d="M33 25c4 5 5 8 1 10-4-2-3-5-1-10Z"/>
+      </symbol>
+      <symbol id="qp-angry" viewBox="0 0 48 48">
+        <circle class="mood-face mood-warm" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M16 20l7 3M32 20l-7 3M19 32c3-2 7-2 10 0"/>
+      </symbol>
+      <symbol id="qp-calm" viewBox="0 0 48 48">
+        <circle class="mood-face mood-blue" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M16 23c2-2 5-2 7 0M25 23c2-2 5-2 7 0M18 31h12"/>
+      </symbol>
+      <symbol id="qp-done" viewBox="0 0 48 48">
+        <circle class="mood-face" cx="24" cy="24" r="17"/>
+        <path class="check-line" d="M17 26l6 6 12-15"/>
+      </symbol>
+      <symbol id="qp-tired" viewBox="0 0 48 48">
+        <circle class="mood-face mood-blue" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M18 25c2-1 4-1 6 0M29 23c2-1 4-1 6 0M20 32c4-2 8-2 12 0"/>
+      </symbol>
+      <symbol id="qp-surprised" viewBox="0 0 48 48">
+        <circle class="mood-face" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M17 21h.1M31 21h.1"/>
+        <circle class="face-line" cx="24" cy="31" r="3"/>
+      </symbol>
+      <symbol id="qp-cheer" viewBox="0 0 48 48">
+        <circle class="mood-face" cx="24" cy="24" r="17"/>
+        <path class="face-line" d="M17 21h.1M31 21h.1M19 29c3 3 7 3 10 0M14 12l-4-4M34 12l4-4"/>
+      </symbol>
+      <symbol id="qp-sprout" viewBox="0 0 48 48">
+        <path class="ground-line" d="M8 39c8 3 24 3 32 0"/>
+        <path class="stem-line" d="M24 38V20"/>
+        <path class="leaf-fill" d="M23 22c-8-8-15-7-17 2 6 6 13 7 17-2Z"/>
+        <path class="leaf-fill" d="M25 21c8-10 16-8 18 1-6 8-14 9-18-1Z"/>
+      </symbol>
+    </svg>
+    <main class="desktop" aria-label="青萍桌面助手">
+      <aside class="panel" id="panel" aria-label="青萍主面板">
+        <div class="panel-bg" aria-hidden="true"></div>
+        <header class="panel-header">
+          <div>
+            <p>Qingping</p>
+            <h2><img class="title-brand-icon" src="assets/qingping-lily-clock.png" alt="">青萍</h2>
+          </div>
+          <div class="window-actions">
+            <button class="icon-button" id="collapseButton" type="button" aria-label="收起为气泡" title="收起为气泡">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+            </button>
+            <button class="icon-button" id="settingsButton" type="button" aria-label="设置" title="设置">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6V20a2 2 0 0 1-4 0v-.09a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1H4a2 2 0 0 1 0-4h.09a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6V4a2 2 0 0 1 4 0v.09a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.2.36.4.7.6 1H20a2 2 0 0 1 0 4h-.09c-.2.3-.4.64-.51 1Z"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="notice" id="notice" hidden></div>
+
+        <nav class="view-nav" aria-label="界面切换">
+          <button class="view-tab is-active" data-view="today" type="button">今日</button>
+          <button class="view-tab" data-view="focus" type="button">专注</button>
+          <button class="view-tab" data-view="knowledge" type="button">感想</button>
+          <button class="view-tab" data-view="history" type="button">历史</button>
+        </nav>
+
+        <section class="view is-active" id="todayView" aria-label="今日任务">
+          <div class="summary-row">
+            <div><strong id="summaryOpen">0</strong><span>待办</span></div>
+            <div><strong id="summaryFocus">0m</strong><span>已专注</span></div>
+            <div><strong id="summaryDone">0</strong><span>完成</span></div>
+          </div>
+          <form class="task-form" id="taskForm">
+            <input id="taskInput" type="text" placeholder="写日报 25m" autocomplete="off">
+            <select id="tagSelect" aria-label="任务标签"></select>
+            <input id="customTagInput" class="is-hidden" type="text" placeholder="自定义标签" autocomplete="off">
+            <button class="primary-button" type="submit">添加</button>
+          </form>
+          <div class="section-title"><span>今天要做</span><small id="taskTotal">0m</small></div>
+          <ul class="task-list" id="taskList"></ul>
+        </section>
+
+        <section class="view" id="focusView" aria-label="任务计时">
+          <article class="focus-panel">
+            <div class="mode-switch" aria-label="计时模式">
+              <button class="mode-button is-active" data-mode="countdown" type="button">倒计时</button>
+              <button class="mode-button" data-mode="countup" type="button">正计时</button>
+            </div>
+            <p id="focusLabel">下一项</p>
+            <h3 id="focusTitle">整理今日重点</h3>
+            <span id="focusMeta">25 分钟 · 计划</span>
+            <div class="timer-face">
+              <svg class="progress-ring" viewBox="0 0 168 168" aria-hidden="true">
+                <circle class="progress-ring__track" cx="84" cy="84" r="74"></circle>
+                <circle class="progress-ring__bar" id="timerRing" cx="84" cy="84" r="74"></circle>
+              </svg>
+              <button class="timer-text" id="timerText" type="button" aria-label="编辑倒计时时间">25:00</button>
+              <input class="timer-edit" id="timerEdit" type="text" inputmode="numeric" aria-label="倒计时时间输入" hidden>
+            </div>
+            <div class="focus-actions">
+              <button class="primary-button" id="toggleTimer" type="button">开始</button>
+              <button class="secondary-button" id="completeTask" type="button">完成</button>
+              <button class="ghost-button" id="resetTimer" type="button">重置</button>
+            </div>
+          </article>
+          <label class="select-field"><span>当前任务</span><select id="taskSelect"></select></label>
+          <div class="countdown-builder" id="countdownBuilder">
+            <span>倒计时段</span>
+            <input id="countdownMinutes" type="number" min="1" max="240" step="1" value="25" aria-label="倒计时分钟">
+            <button class="secondary-button" id="addCountdown" type="button">加入队列</button>
+          </div>
+          <div class="segment-strip" id="segmentQueue" aria-label="倒计时队列"></div>
+        </section>
+
+        <section class="view" id="knowledgeView" aria-label="今日感想">
+          <article class="reflection-book">
+            <div class="reflection-head">
+              <span id="reflectionDate">今天</span>
+              <small id="reflectionSavedAt">今日还未记录</small>
+            </div>
+            <input class="reflection-title" id="reflectionTitle" type="text" placeholder="给今天起一个标题" autocomplete="off">
+            <div class="reflection-toolbar">
+              <span class="reflection-mode-label">今日心情</span>
+              <div class="reflection-stickers" id="reflectionStickers" aria-label="青萍表情"></div>
+            </div>
+            <div class="reflection-editor" id="reflectionEditorWrap">
+              <textarea id="reflectionMarkdown" placeholder="写下今天的工作、生活和心情。可以点上方表情，直接插入到文字里。"></textarea>
+            </div>
+          </article>
+        </section>
+
+        <section class="view" id="historyView" aria-label="历史任务">
+          <div class="section-title">
+            <span id="historyHeading">按天回顾</span>
+            <div class="title-actions">
+              <button class="text-button" id="historyBack" type="button" hidden>返回</button>
+              <button class="text-button" id="exportHistory" type="button">导出 CSV</button>
+            </div>
+          </div>
+          <ul class="history-list" id="historyList"></ul>
+        </section>
+
+        <div class="resize-zone resize-n" data-edge="n"></div>
+        <div class="resize-zone resize-s" data-edge="s"></div>
+        <div class="resize-zone resize-e" data-edge="e"></div>
+        <div class="resize-zone resize-w" data-edge="w"></div>
+        <div class="resize-zone resize-ne" data-edge="ne"></div>
+        <div class="resize-zone resize-nw" data-edge="nw"></div>
+        <div class="resize-zone resize-se" data-edge="se"></div>
+        <div class="resize-zone resize-sw" data-edge="sw"></div>
+      </aside>
+
+      <aside class="settings" id="settingsPanel" aria-label="设置" hidden>
+        <header>
+          <h2><img class="title-brand-icon" src="assets/qingping-lily-clock.png" alt="">设置</h2>
+          <button class="icon-button" id="closeSettings" type="button" aria-label="关闭">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+        <label class="settings-row"><span>主题配色</span><select id="themeSelect"><option value="green">青萍绿</option><option value="blue">晨雾蓝</option><option value="violet">薄藤紫</option></select></label>
+        <label class="settings-row"><span>背景</span><select id="backgroundPreset"><option value="dew">清露白</option><option value="violet">薄藤紫</option><option value="mist">晨雾蓝</option><option value="bamboo">竹影绿</option><option value="image">本地图片</option></select></label>
+        <button class="secondary-button wide-button" id="chooseBackground" type="button">选择背景图片</button>
+        <label class="settings-row"><span>面板透明度</span><input id="panelOpacity" type="range" min="68" max="98" value="92"></label>
+        <label class="settings-row"><span>气泡显示计时</span><input id="showBubbleTimer" type="checkbox" checked></label>
+        <label class="settings-row"><span>开机自启</span><input id="autoStart" type="checkbox"></label>
+        <label class="settings-row"><span>系统通知</span><input id="systemNotify" type="checkbox" checked></label>
+        <label class="settings-row"><span>气泡透明度</span><input id="bubbleOpacity" type="range" min="45" max="95" value="70"></label>
+      </aside>
+
+      <div class="rest-toast" id="restToast" hidden>
+        <svg class="sprout" viewBox="0 0 48 48" aria-hidden="true"><use href="#qp-sprout"></use></svg>
+        <strong>青萍冒出啦</strong>
+        <p>起来喝口水，看看远处，再回来继续。</p>
+        <div>
+          <button class="primary-button" id="restContinue" type="button">继续专注</button>
+          <button class="ghost-button" id="restLater" type="button">稍后</button>
+        </div>
+      </div>
+
+      <button class="bubble" id="bubble" type="button" aria-label="展开青萍">
+        <svg class="bubble-ring" viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="bubble-ring__track" cx="32" cy="32" r="29"></circle>
+          <circle class="bubble-ring__bar" id="bubbleRing" cx="32" cy="32" r="29"></circle>
+        </svg>
+        <img class="bubble-brand-icon" src="assets/qingping-lily-clock.png" alt="" aria-hidden="true">
+        <span class="bubble-text" id="bubbleText"></span>
+      </button>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

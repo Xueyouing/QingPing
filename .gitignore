@@ -1,0 +1,7 @@
+node_modules/
+*.log
+*.tmp
+shot-*.png
+dist/
+out/
+.cache/

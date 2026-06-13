@@ -1,0 +1,14 @@
+{
+  "name": "qingping-desktop-assistant",
+  "version": "0.2.0",
+  "private": true,
+  "description": "青萍桌面助手：清新简约的知识型效率伴侣",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check app.js && node --check electron-main.js && node --check preload.js"
+  },
+  "devDependencies": {
+    "electron": "^42.4.0"
+  }
+}
