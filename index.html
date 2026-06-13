@@ -8,46 +8,6 @@
   </head>
   <body class="is-bubble">
     <svg class="qingping-symbols" aria-hidden="true">
-      <symbol id="qp-windLeaf" viewBox="0 0 48 48">
-        <path class="wind-line" d="M6 18c6-5 13-7 21-5"/>
-        <path class="wind-line wind-line-2" d="M4 28c8-4 16-4 25-1"/>
-        <path class="leaf-fill" d="M17 28c5-17 23-18 28-5-7 11-21 12-28 5Z"/>
-        <path class="leaf-vein" d="M20 28c7-4 13-6 22-5"/>
-      </symbol>
-      <symbol id="qp-happy" viewBox="0 0 48 48">
-        <circle class="mood-face" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M17 21h.1M31 21h.1M18 28c4 5 9 5 13 0"/>
-      </symbol>
-      <symbol id="qp-sad" viewBox="0 0 48 48">
-        <circle class="mood-face" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M17 21h.1M31 21h.1M19 32c4-4 8-4 12 0"/>
-        <path class="dew-shine" d="M33 25c4 5 5 8 1 10-4-2-3-5-1-10Z"/>
-      </symbol>
-      <symbol id="qp-angry" viewBox="0 0 48 48">
-        <circle class="mood-face mood-warm" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M16 20l7 3M32 20l-7 3M19 32c3-2 7-2 10 0"/>
-      </symbol>
-      <symbol id="qp-calm" viewBox="0 0 48 48">
-        <circle class="mood-face mood-blue" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M16 23c2-2 5-2 7 0M25 23c2-2 5-2 7 0M18 31h12"/>
-      </symbol>
-      <symbol id="qp-done" viewBox="0 0 48 48">
-        <circle class="mood-face" cx="24" cy="24" r="17"/>
-        <path class="check-line" d="M17 26l6 6 12-15"/>
-      </symbol>
-      <symbol id="qp-tired" viewBox="0 0 48 48">
-        <circle class="mood-face mood-blue" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M18 25c2-1 4-1 6 0M29 23c2-1 4-1 6 0M20 32c4-2 8-2 12 0"/>
-      </symbol>
-      <symbol id="qp-surprised" viewBox="0 0 48 48">
-        <circle class="mood-face" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M17 21h.1M31 21h.1"/>
-        <circle class="face-line" cx="24" cy="31" r="3"/>
-      </symbol>
-      <symbol id="qp-cheer" viewBox="0 0 48 48">
-        <circle class="mood-face" cx="24" cy="24" r="17"/>
-        <path class="face-line" d="M17 21h.1M31 21h.1M19 29c3 3 7 3 10 0M14 12l-4-4M34 12l4-4"/>
-      </symbol>
       <symbol id="qp-sprout" viewBox="0 0 48 48">
         <path class="ground-line" d="M8 39c8 3 24 3 32 0"/>
         <path class="stem-line" d="M24 38V20"/>
@@ -55,13 +15,13 @@
         <path class="leaf-fill" d="M25 21c8-10 16-8 18 1-6 8-14 9-18-1Z"/>
       </symbol>
     </svg>
+
     <main class="desktop" aria-label="青萍桌面助手">
       <aside class="panel" id="panel" aria-label="青萍主面板">
         <div class="panel-bg" aria-hidden="true"></div>
         <header class="panel-header">
-          <div>
-            <p>Qingping</p>
-            <h2><img class="title-brand-icon" src="assets/qingping-lily-clock.png" alt="">青萍</h2>
+          <div class="brand-title">
+            <h2><img class="title-brand-icon" src="assets/qingping-lily-clock.png" alt="" aria-hidden="true">青萍</h2>
           </div>
           <div class="window-actions">
             <button class="icon-button" id="collapseButton" type="button" aria-label="收起为气泡" title="收起为气泡">
@@ -96,6 +56,8 @@
           </form>
           <div class="section-title"><span>今天要做</span><small id="taskTotal">0m</small></div>
           <ul class="task-list" id="taskList"></ul>
+          <div class="section-title completed-title"><span>今日完成</span><small id="completedTodayMeta">0项</small></div>
+          <ul class="task-list completed-list" id="completedTodayList"></ul>
         </section>
 
         <section class="view" id="focusView" aria-label="任务计时">
@@ -139,10 +101,10 @@
             <input class="reflection-title" id="reflectionTitle" type="text" placeholder="给今天起一个标题" autocomplete="off">
             <div class="reflection-toolbar">
               <span class="reflection-mode-label">今日心情</span>
-              <div class="reflection-stickers" id="reflectionStickers" aria-label="青萍表情"></div>
+              <div class="reflection-moods" id="reflectionMoods" aria-label="今日心情选择"></div>
             </div>
             <div class="reflection-editor" id="reflectionEditorWrap">
-              <textarea id="reflectionMarkdown" placeholder="写下今天的工作、生活和心情。可以点上方表情，直接插入到文字里。"></textarea>
+              <textarea id="reflectionMarkdown" placeholder="把今天交还给文字：完成的是事，留下的是风经过心上的痕迹。"></textarea>
             </div>
           </article>
         </section>
@@ -170,7 +132,7 @@
 
       <aside class="settings" id="settingsPanel" aria-label="设置" hidden>
         <header>
-          <h2><img class="title-brand-icon" src="assets/qingping-lily-clock.png" alt="">设置</h2>
+          <h2><img class="title-brand-icon" src="assets/qingping-lily-clock.png" alt="" aria-hidden="true">设置</h2>
           <button class="icon-button" id="closeSettings" type="button" aria-label="关闭">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
@@ -188,7 +150,7 @@
       <div class="rest-toast" id="restToast" hidden>
         <svg class="sprout" viewBox="0 0 48 48" aria-hidden="true"><use href="#qp-sprout"></use></svg>
         <strong>青萍冒出啦</strong>
-        <p>起来喝口水，看看远处，再回来继续。</p>
+        <p>起身喝口水，看一眼远处，再把心轻轻放回来。</p>
         <div>
           <button class="primary-button" id="restContinue" type="button">继续专注</button>
           <button class="ghost-button" id="restLater" type="button">稍后</button>

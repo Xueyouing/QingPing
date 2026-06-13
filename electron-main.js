@@ -26,9 +26,7 @@ function getHistoryPath() {
 function readStateFile() {
   try {
     const file = getStatePath();
-    if (!fs.existsSync(file)) {
-      return null;
-    }
+    if (!fs.existsSync(file)) return null;
     const state = JSON.parse(fs.readFileSync(file, "utf8"));
     const historyFile = getHistoryPath();
     if ((!state.history || !state.history.length) && fs.existsSync(historyFile)) {
@@ -78,18 +76,14 @@ function delay(ms) {
 }
 
 async function setWindowMode(mode) {
-  if (!mainWindow || !["bubble", "panel"].includes(mode)) {
-    return windowMode;
-  }
+  if (!mainWindow || !["bubble", "panel"].includes(mode)) return windowMode;
 
   const current = mainWindow.getBounds();
   const token = ++modeSwitchToken;
   windowMode = mode;
   mainWindow.webContents.send("qingping:window:mode:prepare", mode);
   await delay(16);
-  if (!mainWindow || token !== modeSwitchToken) {
-    return windowMode;
-  }
+  if (!mainWindow || token !== modeSwitchToken) return windowMode;
 
   if (mode === "panel") {
     const next = fitBoundsToDisplay(panelBounds || {
@@ -102,20 +96,14 @@ async function setWindowMode(mode) {
     mainWindow.setMinimumSize(PANEL_MIN_SIZE.width, PANEL_MIN_SIZE.height);
     mainWindow.setBounds(next, false);
     await delay(16);
-    if (!mainWindow || token !== modeSwitchToken) {
-      return windowMode;
-    }
+    if (!mainWindow || token !== modeSwitchToken) return windowMode;
     mainWindow.webContents.send("qingping:window:mode:commit", "panel");
     await delay(32);
-    if (mainWindow && token === modeSwitchToken) {
-      mainWindow.setResizable(true);
-    }
+    if (mainWindow && token === modeSwitchToken) mainWindow.setResizable(true);
     return windowMode;
   }
 
-  if (current.width > BUBBLE_SIZE || current.height > BUBBLE_SIZE) {
-    panelBounds = current;
-  }
+  if (current.width > BUBBLE_SIZE || current.height > BUBBLE_SIZE) panelBounds = current;
   const next = keepBoundsVisible({
     x: current.x + current.width - BUBBLE_SIZE,
     y: current.y,
@@ -126,16 +114,12 @@ async function setWindowMode(mode) {
   mainWindow.setResizable(false);
   mainWindow.setBounds(next, false);
   await delay(16);
-  if (mainWindow && token === modeSwitchToken) {
-    mainWindow.webContents.send("qingping:window:mode:commit", "bubble");
-  }
+  if (mainWindow && token === modeSwitchToken) mainWindow.webContents.send("qingping:window:mode:commit", "bubble");
   return windowMode;
 }
 
 function beginWindowDrag(screenX, screenY) {
-  if (!mainWindow) {
-    return;
-  }
+  if (!mainWindow) return;
   const bounds = mainWindow.getBounds();
   dragOffset = {
     x: Number(screenX || 0) - bounds.x,
@@ -144,9 +128,7 @@ function beginWindowDrag(screenX, screenY) {
 }
 
 function dragWindowTo(screenX, screenY) {
-  if (!mainWindow || !dragOffset) {
-    return;
-  }
+  if (!mainWindow || !dragOffset) return;
   mainWindow.setPosition(
     Math.round(Number(screenX || 0) - dragOffset.x),
     Math.round(Number(screenY || 0) - dragOffset.y),
@@ -160,16 +142,12 @@ function endWindowDrag() {
     return;
   }
   mainWindow.setBounds(keepBoundsVisible(mainWindow.getBounds()), false);
-  if (windowMode === "panel") {
-    panelBounds = mainWindow.getBounds();
-  }
+  if (windowMode === "panel") panelBounds = mainWindow.getBounds();
   dragOffset = null;
 }
 
 function moveWindowBy(deltaX, deltaY) {
-  if (!mainWindow) {
-    return null;
-  }
+  if (!mainWindow) return null;
   const bounds = mainWindow.getBounds();
   const next = keepBoundsVisible({
     ...bounds,
@@ -177,16 +155,12 @@ function moveWindowBy(deltaX, deltaY) {
     y: bounds.y + Math.round(Number(deltaY || 0))
   });
   mainWindow.setBounds(next, false);
-  if (windowMode === "panel") {
-    panelBounds = mainWindow.getBounds();
-  }
+  if (windowMode === "panel") panelBounds = mainWindow.getBounds();
   return mainWindow.getBounds();
 }
 
 function beginWindowResize(edge, screenX, screenY) {
-  if (!mainWindow || windowMode !== "panel") {
-    return;
-  }
+  if (!mainWindow || windowMode !== "panel") return;
   resizeState = {
     edge,
     startX: Number(screenX || 0),
@@ -196,20 +170,14 @@ function beginWindowResize(edge, screenX, screenY) {
 }
 
 function resizeWindowTo(screenX, screenY) {
-  if (!mainWindow || !resizeState) {
-    return;
-  }
+  if (!mainWindow || !resizeState) return;
   const dx = Number(screenX || 0) - resizeState.startX;
   const dy = Number(screenY || 0) - resizeState.startY;
   const next = { ...resizeState.bounds };
   const edge = resizeState.edge || "";
 
-  if (edge.includes("e")) {
-    next.width = Math.max(PANEL_MIN_SIZE.width, resizeState.bounds.width + dx);
-  }
-  if (edge.includes("s")) {
-    next.height = Math.max(PANEL_MIN_SIZE.height, resizeState.bounds.height + dy);
-  }
+  if (edge.includes("e")) next.width = Math.max(PANEL_MIN_SIZE.width, resizeState.bounds.width + dx);
+  if (edge.includes("s")) next.height = Math.max(PANEL_MIN_SIZE.height, resizeState.bounds.height + dy);
   if (edge.includes("w")) {
     const width = Math.max(PANEL_MIN_SIZE.width, resizeState.bounds.width - dx);
     next.x = resizeState.bounds.x + resizeState.bounds.width - width;
@@ -234,15 +202,11 @@ function endWindowResize() {
 }
 
 async function chooseBackgroundImage() {
-  if (!mainWindow) {
-    return "";
-  }
+  if (!mainWindow) return "";
   const result = await dialog.showOpenDialog(mainWindow, {
     title: "选择青萍背景图片",
     properties: ["openFile"],
-    filters: [
-      { name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }
-    ]
+    filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }]
   });
   return result.canceled ? "" : result.filePaths[0] || "";
 }
@@ -273,14 +237,10 @@ function createWindow() {
     mainWindow.show();
   });
   mainWindow.on("resize", () => {
-    if (windowMode === "panel" && !resizeState) {
-      panelBounds = mainWindow.getBounds();
-    }
+    if (windowMode === "panel" && !resizeState) panelBounds = mainWindow.getBounds();
   });
   mainWindow.on("move", () => {
-    if (windowMode === "panel" && !dragOffset && !resizeState) {
-      panelBounds = mainWindow.getBounds();
-    }
+    if (windowMode === "panel" && !dragOffset && !resizeState) panelBounds = mainWindow.getBounds();
   });
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -288,16 +248,14 @@ function createWindow() {
 }
 
 function createTrayIcon() {
-  const candidates = ["qingping-tray.ico", "qingping-tray.png", "qingping-tray.svg"];
+  const candidates = ["qingping-tray.ico", "qingping-tray.png", "qingping-lily-clock.png", "qingping-tray.svg"];
   for (const fileName of candidates) {
     const icon = nativeImage.createFromPath(path.join(__dirname, "assets", fileName));
-    if (!icon.isEmpty()) {
-      return icon;
-    }
+    if (!icon.isEmpty()) return icon;
   }
   return nativeImage.createFromDataURL([
     "data:image/svg+xml;utf8,",
-    encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='8' fill='#4caf50'/><path d='M8 17c8-11 16-7 13 5-7 1-12 0-13-5Z' fill='#fff'/><text x='16' y='29' text-anchor='middle' font-family='Arial' font-size='7' font-weight='700' fill='#fff'>QP</text></svg>")
+    encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><rect width='32' height='32' rx='8' fill='#4caf50'/><path d='M8 17c8-11 16-7 13 5-7 1-12 0-13-5Z' fill='#fff'/></svg>")
   ].join(""));
 }
 
@@ -312,9 +270,7 @@ function createTray() {
           createWindow();
           return;
         }
-        if (!mainWindow.isVisible()) {
-          mainWindow.show();
-        }
+        if (!mainWindow.isVisible()) mainWindow.show();
         setWindowMode(windowMode === "panel" ? "bubble" : "panel");
       }
     },
@@ -333,9 +289,7 @@ function createTray() {
 ipcMain.handle("qingping:state:load", () => readStateFile());
 ipcMain.handle("qingping:state:save", (_event, state) => writeStateFile(state));
 ipcMain.handle("qingping:notify", (_event, payload) => {
-  if (!Notification.isSupported()) {
-    return false;
-  }
+  if (!Notification.isSupported()) return false;
   new Notification({
     title: payload?.title || "青萍提醒",
     body: payload?.body || ""
@@ -369,7 +323,5 @@ app.on("window-all-closed", (event) => {
 });
 
 app.on("activate", () => {
-  if (!mainWindow) {
-    createWindow();
-  }
+  if (!mainWindow) createWindow();
 });

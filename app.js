@@ -1,5 +1,12 @@
-const STORAGE_KEY = "qingping-state-v6";
-const LEGACY_KEYS = ["qingping-state-v5", "qingping-state-v4", "qingping-state-v3", "qingping-state-v2", "qingping-state-v1"];
+const STORAGE_KEY = "qingping-state-v7";
+const LEGACY_KEYS = [
+  "qingping-state-v6",
+  "qingping-state-v5",
+  "qingping-state-v4",
+  "qingping-state-v3",
+  "qingping-state-v2",
+  "qingping-state-v1"
+];
 const TIMER_RING_LENGTH = 464.96;
 const BUBBLE_RING_LENGTH = 182.21;
 const DEFAULT_TAGS = ["计划", "工作", "学习", "阅读", "生活"];
@@ -14,26 +21,80 @@ const BACKGROUNDS = {
   mist: "radial-gradient(circle at 80% 10%, rgba(121,199,216,.28), transparent 36%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(237,248,251,.92))",
   bamboo: "radial-gradient(circle at 12% 85%, rgba(76,175,80,.2), transparent 34%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(235,247,235,.92))"
 };
-const STICKERS = [
-  ["【开心】", "开心", "happy"], ["【难过】", "难过", "sad"], ["【生气】", "生气", "angry"], ["【平静】", "平静", "calm"],
-  ["【疲惫】", "疲惫", "tired"], ["【惊喜】", "惊喜", "surprised"], ["【完成】", "完成", "done"], ["【加油】", "加油", "cheer"]
+const MOODS = [
+  { value: "happy", label: "开心", mark: "晴" },
+  { value: "calm", label: "平静", mark: "静" },
+  { value: "tired", label: "疲惫", mark: "倦" },
+  { value: "sad", label: "难过", mark: "雨" },
+  { value: "angry", label: "生气", mark: "火" },
+  { value: "surprised", label: "惊喜", mark: "光" },
+  { value: "done", label: "完成", mark: "成" },
+  { value: "cheer", label: "加油", mark: "风" }
 ];
+
 const desktopBridge = globalThis.qingpingDesktop;
 const $ = (selector) => document.querySelector(selector);
 const els = {
-  panel: $("#panel"), settingsPanel: $("#settingsPanel"), notice: $("#notice"),
-  viewTabs: [...document.querySelectorAll(".view-tab")], views: [...document.querySelectorAll(".view")], modeButtons: [...document.querySelectorAll(".mode-switch .mode-button")],
-  focusLabel: $("#focusLabel"), focusTitle: $("#focusTitle"), focusMeta: $("#focusMeta"), timerText: $("#timerText"), timerEdit: $("#timerEdit"), timerRing: $("#timerRing"),
-  bubble: $("#bubble"), bubbleText: $("#bubbleText"), bubbleRing: $("#bubbleRing"), toggleTimer: $("#toggleTimer"), completeTask: $("#completeTask"), resetTimer: $("#resetTimer"),
-  taskSelect: $("#taskSelect"), countdownBuilder: $("#countdownBuilder"), countdownMinutes: $("#countdownMinutes"), addCountdown: $("#addCountdown"), segmentQueue: $("#segmentQueue"),
-  taskForm: $("#taskForm"), taskInput: $("#taskInput"), tagSelect: $("#tagSelect"), customTagInput: $("#customTagInput"), taskList: $("#taskList"),
-  summaryOpen: $("#summaryOpen"), summaryFocus: $("#summaryFocus"), summaryDone: $("#summaryDone"), taskTotal: $("#taskTotal"),
-  historyHeading: $("#historyHeading"), historyBack: $("#historyBack"), historyList: $("#historyList"), exportHistory: $("#exportHistory"),
-  reflectionDate: $("#reflectionDate"), reflectionTitle: $("#reflectionTitle"), reflectionText: $("#reflectionMarkdown"), reflectionStickers: $("#reflectionStickers"), reflectionSavedAt: $("#reflectionSavedAt"),
-  collapseButton: $("#collapseButton"), settingsButton: $("#settingsButton"), closeSettings: $("#closeSettings"), themeSelect: $("#themeSelect"), backgroundPreset: $("#backgroundPreset"),
-  chooseBackground: $("#chooseBackground"), panelOpacity: $("#panelOpacity"), showBubbleTimer: $("#showBubbleTimer"), autoStart: $("#autoStart"), systemNotify: $("#systemNotify"), bubbleOpacity: $("#bubbleOpacity"),
-  restToast: $("#restToast"), restContinue: $("#restContinue"), restLater: $("#restLater"), resizeZones: [...document.querySelectorAll(".resize-zone")]
+  panel: $("#panel"),
+  settingsPanel: $("#settingsPanel"),
+  notice: $("#notice"),
+  viewTabs: [...document.querySelectorAll(".view-tab")],
+  views: [...document.querySelectorAll(".view")],
+  modeButtons: [...document.querySelectorAll(".mode-switch .mode-button")],
+  focusLabel: $("#focusLabel"),
+  focusTitle: $("#focusTitle"),
+  focusMeta: $("#focusMeta"),
+  timerText: $("#timerText"),
+  timerEdit: $("#timerEdit"),
+  timerRing: $("#timerRing"),
+  bubble: $("#bubble"),
+  bubbleText: $("#bubbleText"),
+  bubbleRing: $("#bubbleRing"),
+  toggleTimer: $("#toggleTimer"),
+  completeTask: $("#completeTask"),
+  resetTimer: $("#resetTimer"),
+  taskSelect: $("#taskSelect"),
+  countdownBuilder: $("#countdownBuilder"),
+  countdownMinutes: $("#countdownMinutes"),
+  addCountdown: $("#addCountdown"),
+  segmentQueue: $("#segmentQueue"),
+  taskForm: $("#taskForm"),
+  taskInput: $("#taskInput"),
+  tagSelect: $("#tagSelect"),
+  customTagInput: $("#customTagInput"),
+  taskList: $("#taskList"),
+  completedTodayList: $("#completedTodayList"),
+  completedTodayMeta: $("#completedTodayMeta"),
+  summaryOpen: $("#summaryOpen"),
+  summaryFocus: $("#summaryFocus"),
+  summaryDone: $("#summaryDone"),
+  taskTotal: $("#taskTotal"),
+  historyHeading: $("#historyHeading"),
+  historyBack: $("#historyBack"),
+  historyList: $("#historyList"),
+  exportHistory: $("#exportHistory"),
+  reflectionDate: $("#reflectionDate"),
+  reflectionTitle: $("#reflectionTitle"),
+  reflectionText: $("#reflectionMarkdown"),
+  reflectionMoods: $("#reflectionMoods"),
+  reflectionSavedAt: $("#reflectionSavedAt"),
+  collapseButton: $("#collapseButton"),
+  settingsButton: $("#settingsButton"),
+  closeSettings: $("#closeSettings"),
+  themeSelect: $("#themeSelect"),
+  backgroundPreset: $("#backgroundPreset"),
+  chooseBackground: $("#chooseBackground"),
+  panelOpacity: $("#panelOpacity"),
+  showBubbleTimer: $("#showBubbleTimer"),
+  autoStart: $("#autoStart"),
+  systemNotify: $("#systemNotify"),
+  bubbleOpacity: $("#bubbleOpacity"),
+  restToast: $("#restToast"),
+  restContinue: $("#restContinue"),
+  restLater: $("#restLater"),
+  resizeZones: [...document.querySelectorAll(".resize-zone")]
 };
+
 const state = loadState();
 let selectedHistoryDay = "";
 let timerId = null;
@@ -57,10 +118,10 @@ function init() {
   applyWindowMode("bubble");
   selectFallbackTask();
   render();
+  hydrateDesktop();
   openPanelFromHash();
   window.setTimeout(openPanelFromHash, 0);
   window.addEventListener("hashchange", openPanelFromHash);
-  hydrateDesktop();
 }
 
 function bindEvents() {
@@ -72,18 +133,31 @@ function bindEvents() {
   els.timerEdit.addEventListener("keydown", onTimerEditKeydown);
   els.timerEdit.addEventListener("blur", commitTimerEdit);
   els.toggleTimer.addEventListener("click", toggleTimer);
-  els.completeTask.addEventListener("click", () => getCurrentTask() && completeTaskById(getCurrentTask().id));
+  els.completeTask.addEventListener("click", () => {
+    const task = getCurrentTask();
+    if (task) completeTaskById(task.id);
+  });
   els.resetTimer.addEventListener("click", resetTimer);
   els.addCountdown.addEventListener("click", addCountdownSegment);
-  els.historyBack.addEventListener("click", () => { selectedHistoryDay = ""; renderHistory(); });
+  els.historyBack.addEventListener("click", () => {
+    selectedHistoryDay = "";
+    renderHistory();
+  });
   els.exportHistory.addEventListener("click", exportHistory);
   els.reflectionTitle.addEventListener("input", saveReflectionFromInputs);
   els.reflectionText.addEventListener("input", saveReflectionFromInputs);
   els.taskSelect.addEventListener("change", () => selectTask(els.taskSelect.value));
   els.collapseButton.addEventListener("click", () => setAppWindowMode("bubble"));
-  els.settingsButton.addEventListener("click", () => { els.settingsPanel.hidden = false; });
-  els.closeSettings.addEventListener("click", () => { els.settingsPanel.hidden = true; });
-  els.restContinue.addEventListener("click", () => { hideRestToast(); setAppWindowMode("panel"); });
+  els.settingsButton.addEventListener("click", () => {
+    els.settingsPanel.hidden = false;
+  });
+  els.closeSettings.addEventListener("click", () => {
+    els.settingsPanel.hidden = true;
+  });
+  els.restContinue.addEventListener("click", () => {
+    hideRestToast();
+    setAppWindowMode("panel");
+  });
   els.restLater.addEventListener("click", hideRestToast);
   [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify].forEach((input) => input.addEventListener("change", updateSettings));
   [els.bubbleOpacity, els.panelOpacity].forEach((input) => input.addEventListener("input", updateSettings));
@@ -91,10 +165,12 @@ function bindEvents() {
   els.bubble.addEventListener("pointerdown", onBubblePointerDown);
   els.bubble.addEventListener("pointermove", onBubblePointerMove);
   els.bubble.addEventListener("pointerup", onBubblePointerUp);
+  els.bubble.addEventListener("pointercancel", onBubblePointerCancel);
   els.resizeZones.forEach((zone) => {
     zone.addEventListener("pointerdown", onResizePointerDown);
     zone.addEventListener("pointermove", onResizePointerMove);
     zone.addEventListener("pointerup", onResizePointerUp);
+    zone.addEventListener("pointercancel", onResizePointerUp);
   });
   desktopBridge?.onWindowModePrepare?.(prepareWindowMode);
   desktopBridge?.onWindowModeCommit?.(commitWindowMode);
@@ -104,13 +180,33 @@ function bindEvents() {
 function loadState() {
   const blank = {
     tasks: [makeTask("整理今日重点", 25, "计划"), makeTask("写一段工作记录", 20, "工作")],
-    history: [], reflections: {},
+    history: [],
+    reflections: {},
     timer: { taskId: "", mode: "countdown", seconds: 1500, totalSeconds: 1500, running: false, queue: [] },
-    settings: { activeView: "today", theme: "green", tags: DEFAULT_TAGS, autoStart: false, systemNotify: true, bubbleOpacity: 70, panelOpacity: 92, showBubbleTimer: true, backgroundPreset: "dew", backgroundMode: "preset", backgroundImagePath: "", panelBlur: 18, bubbleX: null, bubbleY: null }
+    settings: {
+      activeView: "today",
+      theme: "green",
+      tags: DEFAULT_TAGS,
+      autoStart: false,
+      systemNotify: true,
+      bubbleOpacity: 70,
+      panelOpacity: 92,
+      showBubbleTimer: true,
+      backgroundPreset: "dew",
+      backgroundMode: "preset",
+      backgroundImagePath: "",
+      panelBlur: 18,
+      bubbleX: null,
+      bubbleY: null
+    }
   };
   const saved = localStorage.getItem(STORAGE_KEY) || LEGACY_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
   if (!saved) return clone(blank);
-  try { return mergeState(blank, JSON.parse(saved)); } catch { return clone(blank); }
+  try {
+    return mergeState(blank, JSON.parse(saved));
+  } catch {
+    return clone(blank);
+  }
 }
 
 function mergeState(base, saved) {
@@ -126,9 +222,13 @@ function mergeState(base, saved) {
   };
 }
 
-function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  desktopBridge?.saveState?.(clone(state)).catch((error) => console.warn("Failed to save Qingping state:", error));
+function normalizeState() {
+  state.tasks = (state.tasks || []).filter((task) => !task.done).map(migrateTask);
+  state.history = (state.history || []).map(migrateHistoryItem).slice(0, 500);
+  state.reflections = migrateReflections(state.reflections || {});
+  state.settings = migrateSettings(state.settings || {});
+  if (!["today", "focus", "knowledge", "history"].includes(state.settings.activeView)) state.settings.activeView = "today";
+  state.timer = migrateTimer(state.timer || {});
 }
 
 async function hydrateDesktop() {
@@ -152,13 +252,9 @@ async function hydrateDesktop() {
   }
 }
 
-function normalizeState() {
-  state.tasks = (state.tasks || []).filter((task) => !task.done).map(migrateTask);
-  state.history = (state.history || []).map(migrateHistoryItem).slice(0, 500);
-  state.reflections = migrateReflections(state.reflections || {});
-  state.settings = migrateSettings(state.settings || {});
-  if (!["today", "focus", "knowledge", "history"].includes(state.settings.activeView)) state.settings.activeView = "today";
-  state.timer = migrateTimer(state.timer || {});
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  desktopBridge?.saveState?.(clone(state)).catch((error) => console.warn("Failed to save Qingping state:", error));
 }
 
 function render() {
@@ -185,6 +281,7 @@ function renderFocus() {
   els.focusMeta.textContent = task ? `${task.minutes} 分钟 · ${task.tag || "未分类"} · 已投 ${formatFocus(task.actualSeconds)}` : "可以休息一下，或写下今日感想。";
   els.timerText.textContent = formatSeconds(state.timer.seconds);
   els.toggleTimer.textContent = running ? "暂停" : "开始";
+  els.toggleTimer.disabled = !task;
   els.completeTask.disabled = !task;
   els.resetTimer.disabled = !task;
   els.timerRing.style.strokeDashoffset = String(TIMER_RING_LENGTH * (1 - clamp(getTimerProgress(), 0, 1)));
@@ -192,30 +289,49 @@ function renderFocus() {
 }
 
 function renderTasks() {
+  const completedToday = getTodayCompletedTasks();
   els.summaryOpen.textContent = String(state.tasks.length);
   els.summaryFocus.textContent = formatFocus([...state.tasks, ...state.history].reduce((sum, task) => sum + (task.actualSeconds || 0), 0));
-  els.summaryDone.textContent = String(state.history.length);
+  els.summaryDone.textContent = String(completedToday.length);
   els.taskTotal.textContent = `${state.tasks.reduce((sum, task) => sum + task.minutes, 0)}m`;
+  els.completedTodayMeta.textContent = `${completedToday.length}项`;
   els.taskList.innerHTML = "";
+  els.completedTodayList.innerHTML = "";
   els.taskSelect.innerHTML = "";
+
   if (!state.tasks.length) {
-    els.taskList.innerHTML = `<li class="empty-state"><strong>今天暂时很清爽</strong><span>添加一个小任务，即可开始专注并沉淀历史。</span></li>`;
+    els.taskList.innerHTML = `<li class="empty-state compact"><strong>今天暂时很清爽</strong><span>添加一个小任务，给专注一个落点。</span></li>`;
     els.taskSelect.innerHTML = `<option value="">暂无任务</option>`;
+  } else {
+    state.tasks.slice(0, 12).forEach((task) => {
+      const option = new Option(task.title, task.id, task.id === state.timer.taskId, task.id === state.timer.taskId);
+      els.taskSelect.appendChild(option);
+      const item = document.createElement("li");
+      item.className = "task-item";
+      item.innerHTML = `<div class="task-main"><span class="task-title"></span><span class="task-meta"></span></div><select class="tag-mini"></select><div class="task-actions"><button class="task-icon" data-action="select" type="button" title="设为当前">设</button><button class="task-icon" data-action="done" type="button" title="完成">✓</button><button class="task-icon" data-action="delete" type="button" title="删除">×</button></div>`;
+      item.querySelector(".task-title").textContent = task.title;
+      item.querySelector(".task-meta").textContent = `${task.minutes}m · 已投 ${formatFocus(task.actualSeconds)}`;
+      fillTagOptions(item.querySelector(".tag-mini"), task.tag);
+      item.querySelector(".tag-mini").addEventListener("change", (event) => updateTaskTag(task.id, event.target.value));
+      item.querySelector('[data-action="select"]').addEventListener("click", () => selectTask(task.id));
+      item.querySelector('[data-action="done"]').addEventListener("click", () => completeTaskById(task.id));
+      item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteTask(task.id));
+      els.taskList.appendChild(item);
+    });
+  }
+
+  if (!completedToday.length) {
+    els.completedTodayList.innerHTML = `<li class="empty-state mini"><strong>还没有落款</strong><span>完成的事会在这里安静留下。</span></li>`;
     return;
   }
-  state.tasks.slice(0, 12).forEach((task) => {
-    const option = new Option(task.title, task.id, task.id === state.timer.taskId, task.id === state.timer.taskId);
-    els.taskSelect.appendChild(option);
+  completedToday.slice(0, 8).forEach((task) => {
     const item = document.createElement("li");
-    item.className = "task-item";
-    item.innerHTML = `<div class="task-main"><span class="task-title"></span><span class="task-meta">${task.minutes}m · 已投 ${formatFocus(task.actualSeconds)}</span></div><select class="tag-mini"></select><div class="task-actions"><button class="task-icon" data-action="select" type="button">计</button><button class="task-icon" data-action="done" type="button">✓</button><button class="task-icon" data-action="delete" type="button">×</button></div>`;
-    item.querySelector(".task-title").textContent = task.title;
-    fillTagOptions(item.querySelector(".tag-mini"), task.tag);
-    item.querySelector(".tag-mini").addEventListener("change", (event) => updateTaskTag(task.id, event.target.value));
-    item.querySelector('[data-action="select"]').addEventListener("click", () => selectTask(task.id));
-    item.querySelector('[data-action="done"]').addEventListener("click", () => completeTaskById(task.id));
-    item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteTask(task.id));
-    els.taskList.appendChild(item);
+    item.className = "history-item completed-item";
+    item.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta"></span><span class="session-line"></span></div>`;
+    item.querySelector(".history-title").textContent = task.title;
+    item.querySelector(".history-meta").textContent = `${task.tag || "未分类"} · ${formatDateTime(task.completedAt)} · ${formatFocus(task.actualSeconds)}`;
+    item.querySelector(".session-line").textContent = formatSessions(task.sessions);
+    els.completedTodayList.appendChild(item);
   });
 }
 
@@ -223,35 +339,43 @@ function renderHistory() {
   els.historyList.innerHTML = "";
   els.historyBack.hidden = !selectedHistoryDay;
   els.historyHeading.textContent = selectedHistoryDay ? formatDayTitle(selectedHistoryDay) : "按天回顾";
-  const hasReflections = Object.values(state.reflections).some((item) => item.title || item.content);
+  const hasReflections = Object.values(state.reflections).some((item) => item.title || item.content || item.mood);
   if (!state.history.length && !hasReflections) {
-    els.historyList.innerHTML = `<li class="empty-state"><strong>还没有完成记录</strong><span>完成任务后，青萍会按日期保存投入时长和完成时间。</span></li>`;
+    els.historyList.innerHTML = `<li class="empty-state"><strong>还没有完成记录</strong><span>完成任务后，青萍会按日期保存投入时长、完成时间与当天感想。</span></li>`;
     return;
   }
+
   if (selectedHistoryDay) {
-    const reflection = state.reflections[selectedHistoryDay];
-    if (reflection?.title || reflection?.content) {
+    const reflection = state.reflections[selectedHistoryDay] ? migrateReflection(state.reflections[selectedHistoryDay], selectedHistoryDay) : null;
+    if (reflection?.title || reflection?.content || reflection?.mood) {
       const diary = document.createElement("li");
       diary.className = "history-item detail reflection-history";
-      diary.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta">今日感想 · ${reflection.updatedAt ? formatDateTime(reflection.updatedAt) : "未记录时间"}</span><span class="session-line"></span></div>`;
+      diary.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta"></span><span class="session-line"></span></div>`;
       diary.querySelector(".history-title").textContent = reflection.title || "未命名感想";
-      diary.querySelector(".session-line").textContent = reflection.content.replace(/\s+/g, " ").slice(0, 88) || "只留了一阵安静的风。";
+      diary.querySelector(".history-meta").textContent = `今日感想 · ${getMoodLabel(reflection.mood)} · ${reflection.updatedAt ? formatDateTime(reflection.updatedAt) : "未记录时间"}`;
+      diary.querySelector(".session-line").textContent = reflection.content.replace(/\s+/g, " ").slice(0, 88) || "只留下一阵安静的风。";
       els.historyList.appendChild(diary);
     }
     state.history.filter((item) => getLocalDayKey(item.completedAt) === selectedHistoryDay).forEach((task) => {
       const item = document.createElement("li");
       item.className = "history-item detail";
-      item.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta">${task.tag || "未分类"} · ${formatFocus(task.actualSeconds)} · ${formatDateTime(task.completedAt)}</span><span class="session-line">${formatSessions(task.sessions)}</span></div>`;
+      item.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta"></span><span class="session-line"></span></div>`;
       item.querySelector(".history-title").textContent = task.title;
+      item.querySelector(".history-meta").textContent = `${task.tag || "未分类"} · ${formatFocus(task.actualSeconds)} · ${formatDateTime(task.completedAt)}`;
+      item.querySelector(".session-line").textContent = formatSessions(task.sessions);
       els.historyList.appendChild(item);
     });
     return;
   }
+
   groupHistoryByDay().forEach((day) => {
     const item = document.createElement("li");
     item.className = "history-day";
     item.innerHTML = `<button type="button"><span><strong>${formatDayTitle(day.key)}</strong><small>${day.count} 项完成 · ${formatFocus(day.seconds)}${day.hasReflection ? " · 有感想" : ""}</small></span><b>进入</b></button>`;
-    item.querySelector("button").addEventListener("click", () => { selectedHistoryDay = day.key; renderHistory(); });
+    item.querySelector("button").addEventListener("click", () => {
+      selectedHistoryDay = day.key;
+      renderHistory();
+    });
     els.historyList.appendChild(item);
   });
 }
@@ -262,19 +386,22 @@ function renderReflection() {
   if (document.activeElement !== els.reflectionTitle) els.reflectionTitle.value = reflection.title;
   if (document.activeElement !== els.reflectionText) els.reflectionText.value = reflection.content;
   els.reflectionSavedAt.textContent = reflection.updatedAt ? `已保存 ${formatDateTime(reflection.updatedAt)}` : "今日还未记录";
-  if (els.reflectionStickers.dataset.ready !== "1") {
-    els.reflectionStickers.innerHTML = "";
-    STICKERS.forEach(([text, label, symbol]) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "sticker-button";
-      button.title = label;
-      button.innerHTML = `<svg class="qingping-sticker" viewBox="0 0 48 48" aria-hidden="true"><use href="#qp-${symbol}"></use></svg><span>${label}</span>`;
-      button.addEventListener("click", () => insertReflectionSticker(text));
-      els.reflectionStickers.appendChild(button);
-    });
-    els.reflectionStickers.dataset.ready = "1";
-  }
+  renderMoodButtons(reflection.mood);
+}
+
+function renderMoodButtons(activeMood) {
+  els.reflectionMoods.innerHTML = "";
+  MOODS.forEach((mood) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "mood-button";
+    button.classList.toggle("is-active", mood.value === activeMood);
+    button.title = mood.label;
+    button.setAttribute("aria-pressed", mood.value === activeMood ? "true" : "false");
+    button.innerHTML = `<span class="mood-mark">${mood.mark}</span><b>${mood.label}</b>`;
+    button.addEventListener("click", () => setReflectionMood(mood.value));
+    els.reflectionMoods.appendChild(button);
+  });
 }
 
 function renderView() {
@@ -320,7 +447,11 @@ function renderSegmentQueue() {
     button.type = "button";
     button.className = "segment-chip";
     button.textContent = `后续 ${formatFocus(seconds)}`;
-    button.addEventListener("click", () => { state.timer.queue.splice(index, 1); saveState(); renderSegmentQueue(); });
+    button.addEventListener("click", () => {
+      state.timer.queue.splice(index, 1);
+      saveState();
+      renderSegmentQueue();
+    });
     els.segmentQueue.appendChild(button);
   });
 }
@@ -352,82 +483,39 @@ function commitWindowMode(mode) {
 }
 
 async function setAppWindowMode(mode) {
-  const next = mode === "panel" ? "panel" : "bubble";
-  prepareWindowMode(next);
-  try {
-    const actual = await desktopBridge?.setWindowMode?.(next);
-    commitWindowMode(actual || next);
-    return actual || next;
-  } catch {
-    commitWindowMode(next);
-    return next;
-  }
+  prepareWindowMode(mode);
+  await desktopBridge?.setWindowMode?.(mode);
+  if (!desktopBridge?.setWindowMode) commitWindowMode(mode);
 }
 
-function switchView(viewName) {
-  state.settings.activeView = viewName;
+function switchView(view) {
+  state.settings.activeView = view;
   saveState();
   renderView();
 }
 
 function openPanelFromHash() {
-  const params = new URLSearchParams(window.location.search);
-  const requested = params.get("view") || location.hash.replace("#", "");
-  const historyDayParam = params.get("historyDay");
-  if (requested && ["today", "focus", "knowledge", "history"].includes(requested)) {
-    state.settings.activeView = requested;
-    if (requested === "history" && historyDayParam) selectedHistoryDay = historyDayParam;
+  const view = location.hash.replace("#", "") || new URLSearchParams(location.search).get("view");
+  if (["today", "focus", "knowledge", "history"].includes(view)) {
+    state.settings.activeView = view;
     setAppWindowMode("panel");
-    render();
+    renderView();
   }
-}
-
-function startTimerEdit() {
-  if (state.timer.running || state.timer.mode !== "countdown") return;
-  els.timerEdit.hidden = false;
-  els.timerText.hidden = true;
-  els.timerEdit.value = formatSeconds(state.timer.seconds);
-  els.timerEdit.select();
-  els.timerEdit.focus();
-}
-
-function onTimerEditKeydown(event) {
-  if (event.key === "Enter") { event.preventDefault(); commitTimerEdit(); }
-  if (event.key === "Escape") { event.preventDefault(); cancelTimerEdit(); }
-}
-
-function commitTimerEdit() {
-  if (els.timerEdit.hidden) return;
-  const seconds = parseTimeInput(els.timerEdit.value);
-  if (seconds) {
-    state.timer.mode = "countdown";
-    state.timer.running = false;
-    stopTimer();
-    state.timer.totalSeconds = seconds;
-    state.timer.seconds = seconds;
-    els.countdownMinutes.value = String(Math.max(1, Math.round(seconds / 60)));
-    saveState();
-  } else {
-    showNotice("时间格式可写 25、25:00 或 1:30:00");
-  }
-  cancelTimerEdit();
-  render();
-}
-
-function cancelTimerEdit() {
-  els.timerEdit.hidden = true;
-  els.timerText.hidden = false;
 }
 
 function addTask(event) {
   event.preventDefault();
-  const input = els.taskInput.value.trim();
-  if (!input) return;
-  const match = input.match(/(.+?)\s+(\d{1,3})m$/i);
-  const task = makeTask(match ? match[1].trim() : input, match ? clamp(Number(match[2]), 1, 240) : 25, getSelectedTag());
+  const raw = els.taskInput.value.trim();
+  if (!raw) return;
+  const match = raw.match(/^(.*?)(?:\s+(\d{1,3})m)?$/i);
+  const title = (match?.[1] || raw).trim();
+  const minutes = clamp(Number(match?.[2] || 25), 1, 240);
+  const task = makeTask(title || "未命名任务", minutes, getSelectedTag());
   state.tasks.push(task);
-  selectTask(task.id);
+  if (!state.timer.taskId) selectTask(task.id);
   els.taskInput.value = "";
+  els.customTagInput.value = "";
+  selectFallbackTask();
   saveState();
   render();
 }
@@ -444,7 +532,7 @@ function selectFallbackTask() {
   state.timer.taskId = state.tasks[0]?.id || "";
   const task = getCurrentTask();
   if (task) {
-    state.timer.totalSeconds = task.minutes * 60;
+    state.timer.totalSeconds = Math.max(1, task.minutes * 60);
     state.timer.seconds = state.timer.mode === "countup" ? 0 : state.timer.totalSeconds;
   }
 }
@@ -455,7 +543,7 @@ function selectTask(taskId) {
   stopTimer();
   state.timer.running = false;
   if (task) {
-    state.timer.totalSeconds = task.minutes * 60;
+    state.timer.totalSeconds = Math.max(1, task.minutes * 60);
     state.timer.seconds = state.timer.mode === "countup" ? 0 : state.timer.totalSeconds;
   }
   saveState();
@@ -468,19 +556,28 @@ function setTimerMode(mode) {
   stopTimer();
   state.timer.mode = mode;
   state.timer.running = false;
-  state.timer.totalSeconds = task ? task.minutes * 60 : 1500;
+  state.timer.totalSeconds = task ? Math.max(1, task.minutes * 60) : 1500;
   state.timer.seconds = mode === "countup" ? 0 : state.timer.totalSeconds;
   saveState();
   render();
 }
 
 function toggleTimer() {
-  if (!getCurrentTask()) { showNotice("先添加或选择一个任务。"); return; }
+  selectFallbackTask();
+  if (!getCurrentTask()) {
+    showNotice("先添加或选择一个任务，再开始计时。");
+    return;
+  }
   state.timer.running ? pauseTimer() : startTimer();
 }
 
 function startTimer() {
-  if (state.timer.running) return;
+  const task = getCurrentTask();
+  if (!task || state.timer.running) return;
+  if (timerId) window.clearInterval(timerId);
+  if (state.timer.mode === "countdown" && state.timer.seconds <= 0) {
+    state.timer.seconds = state.timer.totalSeconds || task.minutes * 60;
+  }
   state.timer.running = true;
   timerId = window.setInterval(tickTimer, 1000);
   saveState();
@@ -501,7 +598,10 @@ function stopTimer() {
 
 function tickTimer() {
   const task = getCurrentTask();
-  if (!task) { pauseTimer(); return; }
+  if (!task) {
+    pauseTimer();
+    return;
+  }
   task.actualSeconds = (task.actualSeconds || 0) + 1;
   if (state.timer.mode === "countup") {
     state.timer.seconds += 1;
@@ -531,29 +631,75 @@ function resetTimer() {
   if (!task) return;
   stopTimer();
   state.timer.running = false;
-  state.timer.totalSeconds = task.minutes * 60;
+  state.timer.totalSeconds = Math.max(1, task.minutes * 60);
   state.timer.seconds = state.timer.mode === "countup" ? 0 : state.timer.totalSeconds;
   state.timer.queue = [];
   saveState();
   render();
 }
 
+function startTimerEdit() {
+  if (state.timer.running || state.timer.mode !== "countdown") return;
+  els.timerEdit.hidden = false;
+  els.timerText.hidden = true;
+  els.timerEdit.value = formatSeconds(state.timer.seconds);
+  els.timerEdit.focus();
+  els.timerEdit.select();
+}
+
+function onTimerEditKeydown(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    commitTimerEdit();
+  }
+  if (event.key === "Escape") {
+    event.preventDefault();
+    cancelTimerEdit();
+  }
+}
+
+function commitTimerEdit() {
+  if (els.timerEdit.hidden) return;
+  const seconds = parseTimeInput(els.timerEdit.value);
+  if (seconds > 0) {
+    state.timer.mode = "countdown";
+    state.timer.seconds = seconds;
+    state.timer.totalSeconds = seconds;
+    els.countdownMinutes.value = String(Math.max(1, Math.round(seconds / 60)));
+    saveState();
+  } else {
+    showNotice("时间格式可用 25、25:00 或 1:30:00。");
+  }
+  cancelTimerEdit();
+  render();
+}
+
+function cancelTimerEdit() {
+  els.timerEdit.hidden = true;
+  els.timerText.hidden = false;
+}
+
 function addCountdownSegment() {
   const task = getCurrentTask();
-  if (!task) { showNotice("先选择一个任务，再添加倒计时。"); return; }
+  if (!task) {
+    showNotice("先选择一个任务，再添加倒计时。");
+    return;
+  }
   state.timer.mode = "countdown";
   state.timer.queue.push(clamp(Number(els.countdownMinutes.value || task.minutes), 1, 240) * 60);
   saveState();
   render();
 }
 
-function completeTaskById(taskId, message = "任务已完成，历史已按日期保存。") {
+function completeTaskById(taskId, message = "任务已完成，已记录在今日完成与历史中。") {
   const index = state.tasks.findIndex((task) => task.id === taskId);
   if (index < 0) return;
   const [task] = state.tasks.splice(index, 1);
+  if (task.id === state.timer.taskId && state.timer.running && state.timer.mode === "countup" && state.timer.seconds > 0) {
+    recordTaskSession(task, state.timer.seconds);
+  }
   stopTimer();
   state.timer.running = false;
-  if (task.id === state.timer.taskId && state.timer.mode === "countup" && state.timer.seconds > 0) recordTaskSession(task, state.timer.seconds);
   task.actualSeconds = Math.max(task.actualSeconds || 0, totalSessionSeconds(task.sessions));
   state.history.unshift({ ...task, completedAt: new Date().toISOString() });
   state.history = state.history.slice(0, 500);
@@ -579,7 +725,10 @@ function updateTaskTag(taskId, value) {
   if (!task) return;
   if (value === "__custom") {
     const tag = window.prompt("输入新的标签", task.tag || "");
-    if (!tag) { renderTasks(); return; }
+    if (!tag) {
+      renderTasks();
+      return;
+    }
     task.tag = tag.trim();
     addKnownTag(task.tag);
   } else {
@@ -600,6 +749,15 @@ function getReflection(key = todayKey()) {
   return state.reflections[key];
 }
 
+function setReflectionMood(mood) {
+  const reflection = getReflection(todayKey());
+  reflection.mood = reflection.mood === mood ? "" : mood;
+  reflection.updatedAt = new Date().toISOString();
+  saveState();
+  renderReflection();
+  renderHistory();
+}
+
 function saveReflectionFromInputs() {
   const reflection = getReflection(todayKey());
   reflection.title = els.reflectionTitle.value.trim();
@@ -609,30 +767,32 @@ function saveReflectionFromInputs() {
   els.reflectionSavedAt.textContent = `已保存 ${formatDateTime(reflection.updatedAt)}`;
 }
 
-function insertReflectionSticker(text) {
-  const input = els.reflectionText;
-  const start = input.selectionStart || 0;
-  const end = input.selectionEnd || 0;
-  const prefix = start > 0 && input.value[start - 1] && !/\s/.test(input.value[start - 1]) ? " " : "";
-  const suffix = input.value[end] && !/\s/.test(input.value[end]) ? " " : "";
-  input.value = `${input.value.slice(0, start)}${prefix}${text}${suffix}${input.value.slice(end)}`;
-  input.focus();
-  input.setSelectionRange(start + prefix.length + text.length + suffix.length, start + prefix.length + text.length + suffix.length);
-  saveReflectionFromInputs();
-}
-
 function exportHistory() {
   const used = new Set();
-  const rows = [["日期", "任务", "标签", "计划分钟", "实际分钟", "完成时间", "专注段", "感想标题", "感想内容", "感想更新时间"]];
+  const rows = [["日期", "任务", "标签", "计划分钟", "实际分钟", "完成时间", "专注段", "今日心情", "感想标题", "感想内容", "感想更新时间"]];
   state.history.forEach((item) => {
     const day = getLocalDayKey(item.completedAt);
     const reflection = state.reflections[day] ? migrateReflection(state.reflections[day], day) : null;
-    if (reflection?.title || reflection?.content) used.add(day);
-    rows.push([day, item.title, item.tag || "", item.minutes, Math.round((item.actualSeconds || 0) / 60), item.completedAt || "", formatSessions(item.sessions), reflection?.title || "", reflection?.content || "", reflection?.updatedAt || ""]);
+    if (reflection?.title || reflection?.content || reflection?.mood) used.add(day);
+    rows.push([
+      day,
+      item.title,
+      item.tag || "",
+      item.minutes,
+      Math.round((item.actualSeconds || 0) / 60),
+      item.completedAt || "",
+      formatSessions(item.sessions),
+      getMoodLabel(reflection?.mood),
+      reflection?.title || "",
+      reflection?.content || "",
+      reflection?.updatedAt || ""
+    ]);
   });
   Object.entries(state.reflections).sort(([a], [b]) => b.localeCompare(a)).forEach(([day, raw]) => {
     const reflection = migrateReflection(raw, day);
-    if (!used.has(day) && (reflection.title || reflection.content)) rows.push([day, "仅感想", "", "", "", reflection.updatedAt || "", "", reflection.title, reflection.content, reflection.updatedAt || ""]);
+    if (!used.has(day) && (reflection.title || reflection.content || reflection.mood)) {
+      rows.push([day, "仅感想", "", "", "", reflection.updatedAt || "", "", getMoodLabel(reflection.mood), reflection.title, reflection.content, reflection.updatedAt || ""]);
+    }
   });
   const blob = new Blob([`\ufeff${rows.map((row) => row.map(csvCell).join(",")).join("\n")}`], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
@@ -643,7 +803,10 @@ function exportHistory() {
 }
 
 async function chooseBackgroundImage() {
-  if (!desktopBridge?.chooseBackgroundImage) { showNotice("桌面版支持选择本地背景图片。"); return; }
+  if (!desktopBridge?.chooseBackgroundImage) {
+    showNotice("桌面版支持选择本地背景图片。");
+    return;
+  }
   const filePath = await desktopBridge.chooseBackgroundImage();
   if (!filePath) return;
   state.settings.backgroundMode = "image";
@@ -703,7 +866,9 @@ function showNotice(message) {
   els.notice.textContent = message;
   els.notice.hidden = false;
   window.clearTimeout(showNotice.timer);
-  showNotice.timer = window.setTimeout(() => { els.notice.hidden = true; }, 3200);
+  showNotice.timer = window.setTimeout(() => {
+    els.notice.hidden = true;
+  }, 3200);
 }
 
 function showRestToast() {
@@ -716,11 +881,14 @@ function showRestToast() {
 function hideRestToast() {
   els.restToast.classList.add("is-leaving");
   window.clearTimeout(showRestToast.timer);
-  window.setTimeout(() => { els.restToast.hidden = true; els.restToast.classList.remove("is-leaving"); }, 220);
+  window.setTimeout(() => {
+    els.restToast.hidden = true;
+    els.restToast.classList.remove("is-leaving");
+  }, 220);
 }
 
 function onBubblePointerDown(event) {
-  bubblePointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, originX: els.bubble.offsetLeft, originY: els.bubble.offsetTop };
+  bubblePointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
   bubbleMoved = false;
   els.bubble.setPointerCapture(event.pointerId);
   els.bubble.classList.add("is-dragging");
@@ -732,32 +900,46 @@ function onBubblePointerMove(event) {
   const dx = event.clientX - bubblePointer.startX;
   const dy = event.clientY - bubblePointer.startY;
   if (Math.abs(dx) + Math.abs(dy) > 4) bubbleMoved = true;
-  if (desktopBridge?.dragWindowTo) {
-    pendingDragPoint = { x: event.screenX, y: event.screenY };
-    if (!dragFrame) dragFrame = window.requestAnimationFrame(() => { dragFrame = 0; if (pendingDragPoint) desktopBridge.dragWindowTo(pendingDragPoint.x, pendingDragPoint.y); });
-    return;
+  if (!desktopBridge?.dragWindowTo) return;
+  pendingDragPoint = { x: event.screenX, y: event.screenY };
+  if (!dragFrame) {
+    dragFrame = window.requestAnimationFrame(() => {
+      dragFrame = 0;
+      if (pendingDragPoint) desktopBridge.dragWindowTo(pendingDragPoint.x, pendingDragPoint.y);
+    });
   }
-  els.bubble.style.left = `${clamp(bubblePointer.originX + dx, 8, window.innerWidth - els.bubble.offsetWidth - 8)}px`;
-  els.bubble.style.top = `${clamp(bubblePointer.originY + dy, 8, window.innerHeight - els.bubble.offsetHeight - 8)}px`;
-  els.bubble.style.right = "auto";
 }
 
 function onBubblePointerUp(event) {
   if (!bubblePointer || event.pointerId !== bubblePointer.id) return;
-  els.bubble.releasePointerCapture(event.pointerId);
+  if (els.bubble.hasPointerCapture(event.pointerId)) els.bubble.releasePointerCapture(event.pointerId);
+  finishBubbleDrag();
+  if (!bubbleMoved) {
+    const now = Date.now();
+    if (now - lastBubbleClick < 320) {
+      window.clearTimeout(bubbleClickTimer);
+      toggleTimer();
+    } else {
+      bubbleClickTimer = window.setTimeout(togglePanel, 320);
+    }
+    lastBubbleClick = now;
+  }
+  bubblePointer = null;
+}
+
+function onBubblePointerCancel(event) {
+  if (bubblePointer && els.bubble.hasPointerCapture(event.pointerId)) els.bubble.releasePointerCapture(event.pointerId);
+  finishBubbleDrag();
+  bubblePointer = null;
+}
+
+function finishBubbleDrag() {
   els.bubble.classList.remove("is-dragging");
   if (dragFrame) window.cancelAnimationFrame(dragFrame);
   dragFrame = 0;
   if (pendingDragPoint && desktopBridge?.dragWindowTo) desktopBridge.dragWindowTo(pendingDragPoint.x, pendingDragPoint.y);
   pendingDragPoint = null;
   desktopBridge?.endWindowDrag?.();
-  if (!bubbleMoved) {
-    const now = Date.now();
-    if (now - lastBubbleClick < 320) { window.clearTimeout(bubbleClickTimer); toggleTimer(); }
-    else bubbleClickTimer = window.setTimeout(togglePanel, 320);
-    lastBubbleClick = now;
-  }
-  bubblePointer = null;
 }
 
 function onResizePointerDown(event) {
@@ -768,7 +950,12 @@ function onResizePointerDown(event) {
 function onResizePointerMove(event) {
   if (!event.currentTarget.hasPointerCapture(event.pointerId) || !desktopBridge?.resizeWindowTo) return;
   pendingResizePoint = { x: event.screenX, y: event.screenY };
-  if (!resizeFrame) resizeFrame = window.requestAnimationFrame(() => { resizeFrame = 0; if (pendingResizePoint) desktopBridge.resizeWindowTo(pendingResizePoint.x, pendingResizePoint.y); });
+  if (!resizeFrame) {
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = 0;
+      if (pendingResizePoint) desktopBridge.resizeWindowTo(pendingResizePoint.x, pendingResizePoint.y);
+    });
+  }
 }
 
 function onResizePointerUp(event) {
@@ -780,32 +967,208 @@ function onResizePointerUp(event) {
   desktopBridge?.endWindowResize?.();
 }
 
-function togglePanel() { setAppWindowMode(currentWindowMode === "panel" ? "bubble" : "panel"); }
-function getCurrentTask() { return state.tasks.find((task) => task.id === state.timer.taskId) || null; }
-function getTimerProgress() { return state.timer.mode === "countup" ? (state.timer.totalSeconds > 0 ? state.timer.seconds / state.timer.totalSeconds : 0) : (state.timer.totalSeconds > 0 ? 1 - state.timer.seconds / state.timer.totalSeconds : 0); }
-function makeTask(title, minutes = 25, tag = "") { return { id: makeId(), title, minutes, tag, actualSeconds: 0, sessions: [], createdAt: new Date().toISOString() }; }
-function migrateTask(task) { return { id: task.id || makeId(), title: task.title || "未命名任务", minutes: clamp(Number(task.minutes || task.duration || 25), 1, 240), tag: task.tag || "", actualSeconds: Number(task.actualSeconds || 0), sessions: Array.isArray(task.sessions) ? task.sessions.map(migrateSession) : [], createdAt: task.createdAt || new Date().toISOString() }; }
-function migrateHistoryItem(task) { return { ...migrateTask(task), completedAt: task.completedAt || new Date().toISOString() }; }
-function migrateSession(session) { return { seconds: Math.max(0, Number(session.seconds || 0)), mode: ["countdown", "countup"].includes(session.mode) ? session.mode : "countdown", endedAt: session.endedAt || new Date().toISOString() }; }
-function migrateTimer(timer) { const mode = ["countdown", "countup"].includes(timer.mode) ? timer.mode : "countdown"; return { taskId: timer.taskId || "", mode, seconds: Math.max(0, Number(timer.seconds || (mode === "countup" ? 0 : 1500))), totalSeconds: Math.max(1, Number(timer.totalSeconds || 1500)), running: false, queue: Array.isArray(timer.queue) ? timer.queue.map((value) => Math.max(60, Number(value || 0))).filter(Boolean) : [] }; }
-function migrateReflections(reflections) { return Object.entries(reflections || {}).reduce((result, [key, value]) => { if (/^\d{4}-\d{2}-\d{2}$/.test(key)) result[key] = migrateReflection(value, key); return result; }, {}); }
-function migrateReflection(value, key = todayKey()) { if (typeof value === "string") return { title: `${key} 感想`, content: value, updatedAt: "" }; return { title: String(value?.title || ""), content: String(value?.content || value?.markdown || value?.body || ""), updatedAt: value?.updatedAt || "" }; }
-function migrateSettings(settings) { const theme = settings.theme === "lotus" ? "violet" : settings.theme; const hasImage = Boolean(settings.backgroundImagePath); const wantsImage = settings.backgroundMode === "image" || settings.backgroundPreset === "image"; const savedPreset = BACKGROUNDS[settings.backgroundPreset] ? settings.backgroundPreset : "dew"; return { ...settings, theme: THEMES[theme] ? theme : "green", tags: Array.from(new Set([...(Array.isArray(settings.tags) ? settings.tags : []), ...DEFAULT_TAGS].filter(Boolean))), showBubbleTimer: settings.showBubbleTimer !== false, bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 45, 95), panelOpacity: clamp(Number(settings.panelOpacity || 92), 68, 98), backgroundMode: wantsImage && hasImage ? "image" : "preset", backgroundPreset: wantsImage && hasImage ? "image" : savedPreset, backgroundImagePath: settings.backgroundImagePath || "", panelBlur: clamp(Number(settings.panelBlur || 18), 8, 30) }; }
-function groupHistoryByDay() { const map = new Map(); state.history.forEach((item) => { const key = getLocalDayKey(item.completedAt); const current = map.get(key) || { key, count: 0, seconds: 0 }; current.count += 1; current.seconds += item.actualSeconds || 0; map.set(key, current); }); Object.entries(state.reflections || {}).forEach(([key, raw]) => { const reflection = migrateReflection(raw, key); if (!reflection.title && !reflection.content) return; const current = map.get(key) || { key, count: 0, seconds: 0 }; current.hasReflection = true; map.set(key, current); }); return Array.from(map.values()).sort((a, b) => b.key.localeCompare(a.key)); }
-function addKnownTag(tag) { const clean = String(tag || "").trim(); if (!clean || state.settings.tags.includes(clean)) return; state.settings.tags.unshift(clean); state.settings.tags = state.settings.tags.slice(0, 12); }
-function fillTagOptions(select, selected = "", includeCustom = false) { select.innerHTML = ""; state.settings.tags.forEach((tag) => select.appendChild(new Option(tag, tag, tag === selected, tag === selected))); if (includeCustom || selected === "__custom") select.appendChild(new Option("自定义", "__custom", selected === "__custom", selected === "__custom")); }
-function parseTimeInput(value) { const text = String(value || "").trim(); if (!text) return 0; if (/^\d+$/.test(text)) return clamp(Number(text), 1, 240) * 60; const parts = text.split(":").map(Number); if (parts.some((part) => !Number.isFinite(part) || part < 0)) return 0; if (parts.length === 2) return clamp(parts[0] * 60 + parts[1], 1, 86400); if (parts.length === 3) return clamp(parts[0] * 3600 + parts[1] * 60 + parts[2], 1, 86400); return 0; }
-function formatSeconds(total) { const seconds = Math.max(0, Math.floor(total)); return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }
-function formatBubbleTime(total) { const seconds = Math.max(0, Math.floor(total)); const hours = Math.floor(seconds / 3600); const minutes = Math.floor((seconds % 3600) / 60); return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}` : `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`; }
-function formatFocus(seconds) { const minutes = Math.round((seconds || 0) / 60); return minutes >= 60 ? `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ""}` : `${minutes}m`; }
-function formatSessions(sessions = []) { return sessions.length ? sessions.map((session) => `${session.mode === "countup" ? "正" : "倒"} ${formatFocus(session.seconds)}`).join(" / ") : "暂无分段记录"; }
-function totalSessionSeconds(sessions = []) { return sessions.reduce((sum, session) => sum + (session.seconds || 0), 0); }
-function formatDateTime(value) { if (!value) return ""; const date = new Date(value); return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`; }
-function formatDayTitle(key) { const [year, month, day] = key.split("-"); return key === getLocalDayKey(new Date().toISOString()) ? "今天" : `${year}.${month}.${day}`; }
-function getLocalDayKey(value) { const date = value ? new Date(value) : new Date(); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
-function todayKey() { return getLocalDayKey(new Date().toISOString()); }
-function csvCell(value) { return `"${String(value).replace(/"/g, '""')}"`; }
-function cssUrl(value) { return String(value).replace(/\\/g, "/").replace(/"/g, '\\"'); }
-function clamp(value, min, max) { return Math.min(Math.max(value, min), max); }
-function makeId() { return globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `qp-${Date.now()}-${Math.random().toString(16).slice(2)}`; }
-function clone(value) { return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
+function togglePanel() {
+  setAppWindowMode(currentWindowMode === "panel" ? "bubble" : "panel");
+}
+
+function getCurrentTask() {
+  return state.tasks.find((task) => task.id === state.timer.taskId) || null;
+}
+
+function getTimerProgress() {
+  if (state.timer.mode === "countup") {
+    return state.timer.totalSeconds > 0 ? state.timer.seconds / state.timer.totalSeconds : 0;
+  }
+  return state.timer.totalSeconds > 0 ? 1 - state.timer.seconds / state.timer.totalSeconds : 0;
+}
+
+function getTodayCompletedTasks() {
+  const key = todayKey();
+  return state.history.filter((task) => getLocalDayKey(task.completedAt) === key);
+}
+
+function getMoodLabel(value) {
+  if (!value) return "";
+  return MOODS.find((mood) => mood.value === value)?.label || "";
+}
+
+function makeTask(title, minutes = 25, tag = "") {
+  return { id: makeId(), title, minutes, tag, actualSeconds: 0, sessions: [], createdAt: new Date().toISOString() };
+}
+
+function migrateTask(task = {}) {
+  return {
+    id: task.id || makeId(),
+    title: task.title || "未命名任务",
+    minutes: clamp(Number(task.minutes || task.duration || 25), 1, 240),
+    tag: task.tag || "",
+    actualSeconds: Number(task.actualSeconds || 0),
+    sessions: Array.isArray(task.sessions) ? task.sessions.map(migrateSession) : [],
+    createdAt: task.createdAt || new Date().toISOString()
+  };
+}
+
+function migrateHistoryItem(task = {}) {
+  return { ...migrateTask(task), completedAt: task.completedAt || new Date().toISOString() };
+}
+
+function migrateSession(session = {}) {
+  return {
+    seconds: Math.max(0, Number(session.seconds || 0)),
+    mode: ["countdown", "countup"].includes(session.mode) ? session.mode : "countdown",
+    endedAt: session.endedAt || new Date().toISOString()
+  };
+}
+
+function migrateTimer(timer = {}) {
+  const mode = ["countdown", "countup"].includes(timer.mode) ? timer.mode : "countdown";
+  return {
+    taskId: timer.taskId || "",
+    mode,
+    seconds: Math.max(0, Number(timer.seconds || (mode === "countup" ? 0 : 1500))),
+    totalSeconds: Math.max(1, Number(timer.totalSeconds || 1500)),
+    running: false,
+    queue: Array.isArray(timer.queue) ? timer.queue.map((value) => Math.max(60, Number(value || 0))).filter(Boolean) : []
+  };
+}
+
+function migrateReflections(reflections) {
+  return Object.entries(reflections || {}).reduce((result, [key, value]) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(key)) result[key] = migrateReflection(value, key);
+    return result;
+  }, {});
+}
+
+function migrateReflection(value, key = todayKey()) {
+  if (typeof value === "string") return { title: `${key} 感想`, content: value, mood: "", updatedAt: "" };
+  const content = String(value?.content || value?.markdown || value?.body || "");
+  const mood = MOODS.some((item) => item.value === value?.mood) ? value.mood : "";
+  return { title: String(value?.title || ""), content, mood, updatedAt: value?.updatedAt || "" };
+}
+
+function migrateSettings(settings = {}) {
+  const theme = settings.theme === "lotus" ? "violet" : settings.theme;
+  const hasImage = Boolean(settings.backgroundImagePath);
+  const wantsImage = settings.backgroundMode === "image" || settings.backgroundPreset === "image";
+  const savedPreset = BACKGROUNDS[settings.backgroundPreset] ? settings.backgroundPreset : "dew";
+  return {
+    ...settings,
+    theme: THEMES[theme] ? theme : "green",
+    tags: Array.from(new Set([...(Array.isArray(settings.tags) ? settings.tags : []), ...DEFAULT_TAGS].filter(Boolean))),
+    showBubbleTimer: settings.showBubbleTimer !== false,
+    bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 45, 95),
+    panelOpacity: clamp(Number(settings.panelOpacity || 92), 68, 98),
+    backgroundMode: wantsImage && hasImage ? "image" : "preset",
+    backgroundPreset: wantsImage && hasImage ? "image" : savedPreset,
+    backgroundImagePath: settings.backgroundImagePath || "",
+    panelBlur: clamp(Number(settings.panelBlur || 18), 8, 30)
+  };
+}
+
+function groupHistoryByDay() {
+  const map = new Map();
+  state.history.forEach((item) => {
+    const key = getLocalDayKey(item.completedAt);
+    const current = map.get(key) || { key, count: 0, seconds: 0 };
+    current.count += 1;
+    current.seconds += item.actualSeconds || 0;
+    map.set(key, current);
+  });
+  Object.entries(state.reflections || {}).forEach(([key, raw]) => {
+    const reflection = migrateReflection(raw, key);
+    if (!reflection.title && !reflection.content && !reflection.mood) return;
+    const current = map.get(key) || { key, count: 0, seconds: 0 };
+    current.hasReflection = true;
+    map.set(key, current);
+  });
+  return Array.from(map.values()).sort((a, b) => b.key.localeCompare(a.key));
+}
+
+function addKnownTag(tag) {
+  const clean = String(tag || "").trim();
+  if (!clean || state.settings.tags.includes(clean)) return;
+  state.settings.tags.unshift(clean);
+  state.settings.tags = state.settings.tags.slice(0, 12);
+}
+
+function fillTagOptions(select, selected = "", includeCustom = false) {
+  select.innerHTML = "";
+  state.settings.tags.forEach((tag) => select.appendChild(new Option(tag, tag, tag === selected, tag === selected)));
+  if (includeCustom || selected === "__custom") select.appendChild(new Option("自定义", "__custom", selected === "__custom", selected === "__custom"));
+}
+
+function parseTimeInput(value) {
+  const text = String(value || "").trim();
+  if (!text) return 0;
+  if (/^\d+$/.test(text)) return clamp(Number(text), 1, 240) * 60;
+  const parts = text.split(":").map(Number);
+  if (parts.some((part) => !Number.isFinite(part) || part < 0)) return 0;
+  if (parts.length === 2) return clamp(parts[0] * 60 + parts[1], 1, 86400);
+  if (parts.length === 3) return clamp(parts[0] * 3600 + parts[1] * 60 + parts[2], 1, 86400);
+  return 0;
+}
+
+function formatSeconds(total) {
+  const seconds = Math.max(0, Math.floor(total));
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function formatBubbleTime(total) {
+  const seconds = Math.max(0, Math.floor(total));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}` : `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+function formatFocus(seconds) {
+  const minutes = Math.round((seconds || 0) / 60);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ""}` : `${minutes}m`;
+}
+
+function formatSessions(sessions = []) {
+  return sessions.length ? sessions.map((session) => `${session.mode === "countup" ? "正" : "倒"} ${formatFocus(session.seconds)}`).join(" / ") : "暂无分段记录";
+}
+
+function totalSessionSeconds(sessions = []) {
+  return sessions.reduce((sum, session) => sum + (session.seconds || 0), 0);
+}
+
+function formatDateTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+}
+
+function formatDayTitle(key) {
+  const [year, month, day] = key.split("-");
+  return key === todayKey() ? "今天" : `${year}.${month}.${day}`;
+}
+
+function getLocalDayKey(value) {
+  const date = value ? new Date(value) : new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function todayKey() {
+  return getLocalDayKey(new Date().toISOString());
+}
+
+function csvCell(value) {
+  return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+function cssUrl(value) {
+  return String(value).replace(/\\/g, "/").replace(/"/g, '\\"');
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function makeId() {
+  return globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `qp-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function clone(value) {
+  return typeof structuredClone === "function" ? structuredClone(value) : JSON.parse(JSON.stringify(value));
+}

@@ -198,6 +198,9 @@ button:disabled {
   border-radius: 9px;
   object-fit: cover;
   box-shadow: 0 4px 10px rgba(48, 91, 70, 0.14);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .icon-button {
@@ -330,6 +333,12 @@ svg {
   animation: fadeIn 160ms ease-out both;
 }
 
+#todayView.is-active {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(96px, 1fr) auto minmax(70px, .72fr);
+  min-height: 0;
+}
+
 .summary-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -433,6 +442,15 @@ textarea:focus {
   list-style: none;
 }
 
+.completed-title {
+  margin-top: 10px;
+}
+
+.completed-list {
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, var(--panel-card-alpha)), rgba(238, 248, 241, 0.7));
+}
+
 .empty-state {
   display: grid;
   place-items: center;
@@ -451,6 +469,20 @@ textarea:focus {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.65;
+}
+
+.empty-state.compact {
+  min-height: 92px;
+}
+
+.empty-state.mini {
+  min-height: 62px;
+  padding: 12px;
+}
+
+.empty-state.mini strong,
+.empty-state.mini span {
+  font-size: 12px;
 }
 
 .task-item,
@@ -754,35 +786,51 @@ textarea:focus {
   font-weight: 800;
 }
 
-.reflection-stickers {
+.reflection-moods {
   display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
   gap: 5px;
   min-width: 0;
-  overflow: visible;
 }
 
-.sticker-button {
+.mood-button {
   display: grid;
   place-items: center;
-  width: 31px;
-  height: 31px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   background: rgba(255, 255, 255, var(--panel-card-alpha));
   color: var(--green-dark);
   box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.12);
+  transition: background 160ms ease-out, transform 140ms ease-out, box-shadow 160ms ease-out;
 }
 
-.sticker-button span {
+.mood-button.is-active {
+  background: color-mix(in srgb, var(--green) 18%, white);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 45%, white), 0 7px 16px rgba(66, 166, 90, 0.12);
+}
+
+.mood-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.9), transparent 34%),
+    color-mix(in srgb, var(--green) 56%, white);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.mood-button b {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip: rect(0 0 0 0);
-}
-
-.qingping-sticker {
-  width: 24px;
-  height: 24px;
 }
 
 .reflection-editor {
@@ -1141,6 +1189,9 @@ button:active {
   border-radius: 50%;
   object-fit: cover;
   filter: drop-shadow(0 2px 5px rgba(41, 91, 54, calc(var(--bubble-alpha) * 0.18)));
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .bubble.is-timing .bubble-brand-icon {
@@ -1156,6 +1207,8 @@ button:active {
   white-space: nowrap;
   font-size: 10px;
   font-weight: 700;
+  pointer-events: none;
+  user-select: none;
 }
 
 .bubble.is-timing .bubble-text {
