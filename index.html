@@ -39,7 +39,7 @@
           <button class="view-tab is-active" data-view="today" type="button">今日</button>
           <button class="view-tab" data-view="focus" type="button">专注</button>
           <button class="view-tab" data-view="knowledge" type="button">感想</button>
-          <button class="view-tab" data-view="history" type="button">历史</button>
+          <button class="view-tab" data-view="plan" type="button">计划</button>
         </nav>
 
         <section class="view is-active" id="todayView" aria-label="今日任务">
@@ -101,23 +101,31 @@
             <input class="reflection-title" id="reflectionTitle" type="text" placeholder="给今天起一个标题" autocomplete="off">
             <div class="reflection-toolbar">
               <span class="reflection-mode-label">今日心情</span>
-              <div class="reflection-moods" id="reflectionMoods" aria-label="今日心情选择"></div>
+              <div class="reflection-rating" id="reflectionRating" aria-label="今日心情评分"></div>
             </div>
             <div class="reflection-editor" id="reflectionEditorWrap">
-              <textarea id="reflectionMarkdown" placeholder="把今天交还给文字：完成的是事，留下的是风经过心上的痕迹。"></textarea>
+              <textarea id="reflectionMarkdown" placeholder="给今天留一片青萍：写下风经过时，你心里真正泛起的涟漪。"></textarea>
             </div>
           </article>
         </section>
 
-        <section class="view" id="historyView" aria-label="历史任务">
-          <div class="section-title">
-            <span id="historyHeading">按天回顾</span>
-            <div class="title-actions">
-              <button class="text-button" id="historyBack" type="button" hidden>返回</button>
-              <button class="text-button" id="exportHistory" type="button">导出 CSV</button>
+        <section class="view" id="planView" aria-label="阶段计划">
+          <form class="plan-form" id="planForm">
+            <input id="planTitle" type="text" placeholder="主要任务" autocomplete="off">
+            <input id="planGoal" type="text" placeholder="阶段目标" autocomplete="off">
+            <textarea id="planRoute" placeholder="实现路线：先做什么，再做什么，完成标准是什么。"></textarea>
+            <div class="plan-form-actions">
+              <select id="planStatus" aria-label="计划状态">
+                <option value="active">推进中</option>
+                <option value="next">下一步</option>
+                <option value="blocked">受阻</option>
+                <option value="done">完成</option>
+              </select>
+              <button class="primary-button" type="submit">保存计划</button>
             </div>
-          </div>
-          <ul class="history-list" id="historyList"></ul>
+          </form>
+          <div class="section-title"><span>阶段计划</span><small id="planMeta">0项</small></div>
+          <ul class="plan-list" id="planList"></ul>
         </section>
 
         <div class="resize-zone resize-n" data-edge="n"></div>
@@ -145,6 +153,10 @@
         <label class="settings-row"><span>开机自启</span><input id="autoStart" type="checkbox"></label>
         <label class="settings-row"><span>系统通知</span><input id="systemNotify" type="checkbox" checked></label>
         <label class="settings-row"><span>气泡透明度</span><input id="bubbleOpacity" type="range" min="45" max="95" value="70"></label>
+        <div class="settings-block">
+          <span>数据导出</span>
+          <button class="secondary-button wide-button" id="exportHistory" type="button">导出历史 CSV</button>
+        </div>
       </aside>
 
       <div class="rest-toast" id="restToast" hidden>

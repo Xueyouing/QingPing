@@ -1,5 +1,6 @@
-const STORAGE_KEY = "qingping-state-v7";
+const STORAGE_KEY = "qingping-state-v8";
 const LEGACY_KEYS = [
+  "qingping-state-v7",
   "qingping-state-v6",
   "qingping-state-v5",
   "qingping-state-v4",
@@ -21,16 +22,14 @@ const BACKGROUNDS = {
   mist: "radial-gradient(circle at 80% 10%, rgba(121,199,216,.28), transparent 36%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(237,248,251,.92))",
   bamboo: "radial-gradient(circle at 12% 85%, rgba(76,175,80,.2), transparent 34%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(235,247,235,.92))"
 };
-const MOODS = [
-  { value: "happy", label: "开心", mark: "晴" },
-  { value: "calm", label: "平静", mark: "静" },
-  { value: "tired", label: "疲惫", mark: "倦" },
-  { value: "sad", label: "难过", mark: "雨" },
-  { value: "angry", label: "生气", mark: "火" },
-  { value: "surprised", label: "惊喜", mark: "光" },
-  { value: "done", label: "完成", mark: "成" },
-  { value: "cheer", label: "加油", mark: "风" }
-];
+const MOOD_LABELS = ["低落", "有点累", "平稳", "清亮", "很好"];
+const MOOD_MAP = { sad: 1, angry: 2, tired: 2, calm: 3, surprised: 4, happy: 5, done: 5, cheer: 5 };
+const PLAN_STATUS = {
+  active: "推进中",
+  next: "下一步",
+  blocked: "受阻",
+  done: "完成"
+};
 
 const desktopBridge = globalThis.qingpingDesktop;
 const $ = (selector) => document.querySelector(selector);
@@ -69,14 +68,18 @@ const els = {
   summaryFocus: $("#summaryFocus"),
   summaryDone: $("#summaryDone"),
   taskTotal: $("#taskTotal"),
-  historyHeading: $("#historyHeading"),
-  historyBack: $("#historyBack"),
-  historyList: $("#historyList"),
+  planForm: $("#planForm"),
+  planTitle: $("#planTitle"),
+  planGoal: $("#planGoal"),
+  planRoute: $("#planRoute"),
+  planStatus: $("#planStatus"),
+  planMeta: $("#planMeta"),
+  planList: $("#planList"),
   exportHistory: $("#exportHistory"),
   reflectionDate: $("#reflectionDate"),
   reflectionTitle: $("#reflectionTitle"),
   reflectionText: $("#reflectionMarkdown"),
-  reflectionMoods: $("#reflectionMoods"),
+  reflectionRating: $("#reflectionRating"),
   reflectionSavedAt: $("#reflectionSavedAt"),
   collapseButton: $("#collapseButton"),
   settingsButton: $("#settingsButton"),
@@ -96,7 +99,6 @@ const els = {
 };
 
 const state = loadState();
-let selectedHistoryDay = "";
 let timerId = null;
 let currentWindowMode = "bubble";
 let windowSwitchTimer = 0;
@@ -139,14 +141,11 @@ function bindEvents() {
   });
   els.resetTimer.addEventListener("click", resetTimer);
   els.addCountdown.addEventListener("click", addCountdownSegment);
-  els.historyBack.addEventListener("click", () => {
-    selectedHistoryDay = "";
-    renderHistory();
-  });
   els.exportHistory.addEventListener("click", exportHistory);
   els.reflectionTitle.addEventListener("input", saveReflectionFromInputs);
   els.reflectionText.addEventListener("input", saveReflectionFromInputs);
   els.taskSelect.addEventListener("change", () => selectTask(els.taskSelect.value));
+  els.planForm.addEventListener("submit", addStagePlan);
   els.collapseButton.addEventListener("click", () => setAppWindowMode("bubble"));
   els.settingsButton.addEventListener("click", () => {
     els.settingsPanel.hidden = false;
@@ -182,6 +181,7 @@ function loadState() {
     tasks: [makeTask("整理今日重点", 25, "计划"), makeTask("写一段工作记录", 20, "工作")],
     history: [],
     reflections: {},
+    stagePlans: [],
     timer: { taskId: "", mode: "countdown", seconds: 1500, totalSeconds: 1500, running: false, queue: [] },
     settings: {
       activeView: "today",
@@ -195,9 +195,7 @@ function loadState() {
       backgroundPreset: "dew",
       backgroundMode: "preset",
       backgroundImagePath: "",
-      panelBlur: 18,
-      bubbleX: null,
-      bubbleY: null
+      panelBlur: 18
     }
   };
   const saved = localStorage.getItem(STORAGE_KEY) || LEGACY_KEYS.map((key) => localStorage.getItem(key)).find(Boolean);
@@ -217,6 +215,7 @@ function mergeState(base, saved) {
     tasks: Array.isArray(saved.tasks) ? saved.tasks.filter((task) => !task.done).map(migrateTask) : base.tasks,
     history: [...history, ...completed].slice(0, 500),
     reflections: migrateReflections(saved.reflections || saved.diary || {}),
+    stagePlans: migrateStagePlans(saved.stagePlans || saved.plans || []),
     timer: migrateTimer({ ...base.timer, ...(saved.timer || {}) }),
     settings: migrateSettings({ ...base.settings, ...(saved.settings || {}) })
   };
@@ -226,8 +225,10 @@ function normalizeState() {
   state.tasks = (state.tasks || []).filter((task) => !task.done).map(migrateTask);
   state.history = (state.history || []).map(migrateHistoryItem).slice(0, 500);
   state.reflections = migrateReflections(state.reflections || {});
+  state.stagePlans = migrateStagePlans(state.stagePlans || []);
   state.settings = migrateSettings(state.settings || {});
-  if (!["today", "focus", "knowledge", "history"].includes(state.settings.activeView)) state.settings.activeView = "today";
+  if (state.settings.activeView === "history") state.settings.activeView = "plan";
+  if (!["today", "focus", "knowledge", "plan"].includes(state.settings.activeView)) state.settings.activeView = "today";
   state.timer = migrateTimer(state.timer || {});
 }
 
@@ -261,8 +262,8 @@ function render() {
   renderTagSelects();
   renderFocus();
   renderTasks();
-  renderHistory();
   renderReflection();
+  renderPlans();
   renderView();
   renderSettings();
   renderBubble();
@@ -278,7 +279,7 @@ function renderFocus() {
   els.timerText.disabled = running || state.timer.mode !== "countdown";
   els.focusLabel.textContent = task ? (running ? `${modeLabel}中` : modeLabel) : "今日清空";
   els.focusTitle.textContent = task ? task.title : "没有待办";
-  els.focusMeta.textContent = task ? `${task.minutes} 分钟 · ${task.tag || "未分类"} · 已投 ${formatFocus(task.actualSeconds)}` : "可以休息一下，或写下今日感想。";
+  els.focusMeta.textContent = task ? `${task.minutes} 分钟 · ${task.tag || "未分类"} · 今日 ${formatFocus(getTaskDaySeconds(task, todayKey()))}` : "可以休息一下，或写下今日感想。";
   els.timerText.textContent = formatSeconds(state.timer.seconds);
   els.toggleTimer.textContent = running ? "暂停" : "开始";
   els.toggleTimer.disabled = !task;
@@ -289,31 +290,39 @@ function renderFocus() {
 }
 
 function renderTasks() {
+  const today = todayKey();
+  const todayTasks = state.tasks.filter((task) => isSameDay(task.createdAt, today));
   const completedToday = getTodayCompletedTasks();
-  els.summaryOpen.textContent = String(state.tasks.length);
-  els.summaryFocus.textContent = formatFocus([...state.tasks, ...state.history].reduce((sum, task) => sum + (task.actualSeconds || 0), 0));
+  els.summaryOpen.textContent = String(todayTasks.length);
+  els.summaryFocus.textContent = formatFocus(getTodayFocusSeconds());
   els.summaryDone.textContent = String(completedToday.length);
-  els.taskTotal.textContent = `${state.tasks.reduce((sum, task) => sum + task.minutes, 0)}m`;
+  els.taskTotal.textContent = `${todayTasks.reduce((sum, task) => sum + task.minutes, 0)}m`;
   els.completedTodayMeta.textContent = `${completedToday.length}项`;
   els.taskList.innerHTML = "";
   els.completedTodayList.innerHTML = "";
   els.taskSelect.innerHTML = "";
 
   if (!state.tasks.length) {
-    els.taskList.innerHTML = `<li class="empty-state compact"><strong>今天暂时很清爽</strong><span>添加一个小任务，给专注一个落点。</span></li>`;
     els.taskSelect.innerHTML = `<option value="">暂无任务</option>`;
   } else {
-    state.tasks.slice(0, 12).forEach((task) => {
+    state.tasks.forEach((task) => {
       const option = new Option(task.title, task.id, task.id === state.timer.taskId, task.id === state.timer.taskId);
       els.taskSelect.appendChild(option);
+    });
+  }
+
+  if (!todayTasks.length) {
+    els.taskList.innerHTML = `<li class="empty-state compact"><strong>今天暂时很清爽</strong><span>添加一个小任务，给专注一个落点。</span></li>`;
+  } else {
+    todayTasks.slice(0, 12).forEach((task) => {
       const item = document.createElement("li");
       item.className = "task-item";
-      item.innerHTML = `<div class="task-main"><span class="task-title"></span><span class="task-meta"></span></div><select class="tag-mini"></select><div class="task-actions"><button class="task-icon" data-action="select" type="button" title="设为当前">设</button><button class="task-icon" data-action="done" type="button" title="完成">✓</button><button class="task-icon" data-action="delete" type="button" title="删除">×</button></div>`;
+      item.innerHTML = `<div class="task-main"><span class="task-title"></span><span class="task-meta"></span></div><select class="tag-mini"></select><div class="task-actions"><button class="task-icon timer-action" data-action="timer" type="button" title="开始计时">计时</button><button class="task-icon" data-action="done" type="button" title="完成">✓</button><button class="task-icon" data-action="delete" type="button" title="删除">×</button></div>`;
       item.querySelector(".task-title").textContent = task.title;
-      item.querySelector(".task-meta").textContent = `${task.minutes}m · 已投 ${formatFocus(task.actualSeconds)}`;
+      item.querySelector(".task-meta").textContent = `${task.minutes}m · 今日 ${formatFocus(getTaskDaySeconds(task, today))}`;
       fillTagOptions(item.querySelector(".tag-mini"), task.tag);
       item.querySelector(".tag-mini").addEventListener("change", (event) => updateTaskTag(task.id, event.target.value));
-      item.querySelector('[data-action="select"]').addEventListener("click", () => selectTask(task.id));
+      item.querySelector('[data-action="timer"]').addEventListener("click", () => startTaskTimer(task.id));
       item.querySelector('[data-action="done"]').addEventListener("click", () => completeTaskById(task.id));
       item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteTask(task.id));
       els.taskList.appendChild(item);
@@ -326,57 +335,12 @@ function renderTasks() {
   }
   completedToday.slice(0, 8).forEach((task) => {
     const item = document.createElement("li");
-    item.className = "history-item completed-item";
-    item.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta"></span><span class="session-line"></span></div>`;
+    item.className = "completed-item";
+    item.innerHTML = `<div class="completed-row"><span class="history-title"></span><small class="history-meta"></small></div><span class="session-line"></span>`;
     item.querySelector(".history-title").textContent = task.title;
-    item.querySelector(".history-meta").textContent = `${task.tag || "未分类"} · ${formatDateTime(task.completedAt)} · ${formatFocus(task.actualSeconds)}`;
-    item.querySelector(".session-line").textContent = formatSessions(task.sessions);
+    item.querySelector(".history-meta").textContent = `${task.tag || "未分类"} · ${formatDateTime(task.completedAt)} · ${formatFocus(getTaskDaySeconds(task, today))}`;
+    item.querySelector(".session-line").textContent = formatSessionsForDay(task.sessions, today);
     els.completedTodayList.appendChild(item);
-  });
-}
-
-function renderHistory() {
-  els.historyList.innerHTML = "";
-  els.historyBack.hidden = !selectedHistoryDay;
-  els.historyHeading.textContent = selectedHistoryDay ? formatDayTitle(selectedHistoryDay) : "按天回顾";
-  const hasReflections = Object.values(state.reflections).some((item) => item.title || item.content || item.mood);
-  if (!state.history.length && !hasReflections) {
-    els.historyList.innerHTML = `<li class="empty-state"><strong>还没有完成记录</strong><span>完成任务后，青萍会按日期保存投入时长、完成时间与当天感想。</span></li>`;
-    return;
-  }
-
-  if (selectedHistoryDay) {
-    const reflection = state.reflections[selectedHistoryDay] ? migrateReflection(state.reflections[selectedHistoryDay], selectedHistoryDay) : null;
-    if (reflection?.title || reflection?.content || reflection?.mood) {
-      const diary = document.createElement("li");
-      diary.className = "history-item detail reflection-history";
-      diary.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta"></span><span class="session-line"></span></div>`;
-      diary.querySelector(".history-title").textContent = reflection.title || "未命名感想";
-      diary.querySelector(".history-meta").textContent = `今日感想 · ${getMoodLabel(reflection.mood)} · ${reflection.updatedAt ? formatDateTime(reflection.updatedAt) : "未记录时间"}`;
-      diary.querySelector(".session-line").textContent = reflection.content.replace(/\s+/g, " ").slice(0, 88) || "只留下一阵安静的风。";
-      els.historyList.appendChild(diary);
-    }
-    state.history.filter((item) => getLocalDayKey(item.completedAt) === selectedHistoryDay).forEach((task) => {
-      const item = document.createElement("li");
-      item.className = "history-item detail";
-      item.innerHTML = `<div class="history-main"><span class="history-title"></span><span class="history-meta"></span><span class="session-line"></span></div>`;
-      item.querySelector(".history-title").textContent = task.title;
-      item.querySelector(".history-meta").textContent = `${task.tag || "未分类"} · ${formatFocus(task.actualSeconds)} · ${formatDateTime(task.completedAt)}`;
-      item.querySelector(".session-line").textContent = formatSessions(task.sessions);
-      els.historyList.appendChild(item);
-    });
-    return;
-  }
-
-  groupHistoryByDay().forEach((day) => {
-    const item = document.createElement("li");
-    item.className = "history-day";
-    item.innerHTML = `<button type="button"><span><strong>${formatDayTitle(day.key)}</strong><small>${day.count} 项完成 · ${formatFocus(day.seconds)}${day.hasReflection ? " · 有感想" : ""}</small></span><b>进入</b></button>`;
-    item.querySelector("button").addEventListener("click", () => {
-      selectedHistoryDay = day.key;
-      renderHistory();
-    });
-    els.historyList.appendChild(item);
   });
 }
 
@@ -386,21 +350,43 @@ function renderReflection() {
   if (document.activeElement !== els.reflectionTitle) els.reflectionTitle.value = reflection.title;
   if (document.activeElement !== els.reflectionText) els.reflectionText.value = reflection.content;
   els.reflectionSavedAt.textContent = reflection.updatedAt ? `已保存 ${formatDateTime(reflection.updatedAt)}` : "今日还未记录";
-  renderMoodButtons(reflection.mood);
+  renderMoodRating(reflection.moodScore);
 }
 
-function renderMoodButtons(activeMood) {
-  els.reflectionMoods.innerHTML = "";
-  MOODS.forEach((mood) => {
+function renderMoodRating(score) {
+  els.reflectionRating.innerHTML = "";
+  for (let value = 1; value <= 5; value += 1) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "mood-button";
-    button.classList.toggle("is-active", mood.value === activeMood);
-    button.title = mood.label;
-    button.setAttribute("aria-pressed", mood.value === activeMood ? "true" : "false");
-    button.innerHTML = `<span class="mood-mark">${mood.mark}</span><b>${mood.label}</b>`;
-    button.addEventListener("click", () => setReflectionMood(mood.value));
-    els.reflectionMoods.appendChild(button);
+    button.className = "rating-leaf";
+    button.classList.toggle("is-active", value <= score);
+    button.title = `${value}分 · ${MOOD_LABELS[value - 1]}`;
+    button.setAttribute("aria-pressed", value === score ? "true" : "false");
+    button.innerHTML = `<img src="assets/qingping-lily-clock.png" alt="" aria-hidden="true"><span>${value}</span>`;
+    button.addEventListener("click", () => setReflectionScore(value));
+    els.reflectionRating.appendChild(button);
+  }
+}
+
+function renderPlans() {
+  els.planMeta.textContent = `${state.stagePlans.length}项`;
+  els.planList.innerHTML = "";
+  if (!state.stagePlans.length) {
+    els.planList.innerHTML = `<li class="empty-state compact"><strong>把路线写下来</strong><span>记录当前主要任务、阶段目标和下一步实现路径。</span></li>`;
+    return;
+  }
+  state.stagePlans.forEach((plan) => {
+    const item = document.createElement("li");
+    item.className = `plan-item is-${plan.status}`;
+    item.innerHTML = `<div class="plan-item-head"><strong></strong><span></span></div><p class="plan-goal"></p><p class="plan-route"></p><div class="plan-actions"><button class="text-button" data-action="advance" type="button">推进</button><button class="text-button" data-action="done" type="button">完成</button><button class="text-button danger" data-action="delete" type="button">删除</button></div>`;
+    item.querySelector("strong").textContent = plan.title;
+    item.querySelector(".plan-item-head span").textContent = PLAN_STATUS[plan.status] || "推进中";
+    item.querySelector(".plan-goal").textContent = plan.goal || "未填写阶段目标";
+    item.querySelector(".plan-route").textContent = plan.route || "暂无路线";
+    item.querySelector('[data-action="advance"]').addEventListener("click", () => cyclePlanStatus(plan.id));
+    item.querySelector('[data-action="done"]').addEventListener("click", () => updatePlanStatus(plan.id, "done"));
+    item.querySelector('[data-action="delete"]').addEventListener("click", () => deleteStagePlan(plan.id));
+    els.planList.appendChild(item);
   });
 }
 
@@ -495,8 +481,8 @@ function switchView(view) {
 }
 
 function openPanelFromHash() {
-  const view = location.hash.replace("#", "") || new URLSearchParams(location.search).get("view");
-  if (["today", "focus", "knowledge", "history"].includes(view)) {
+  const view = normalizeViewName(location.hash.replace("#", "") || new URLSearchParams(location.search).get("view"));
+  if (["today", "focus", "knowledge", "plan"].includes(view)) {
     state.settings.activeView = view;
     setAppWindowMode("panel");
     renderView();
@@ -550,6 +536,15 @@ function selectTask(taskId) {
   render();
 }
 
+async function startTaskTimer(taskId) {
+  if (state.timer.running) pauseTimer(false);
+  selectTask(taskId);
+  state.settings.activeView = "focus";
+  renderView();
+  await setAppWindowMode("panel");
+  startTimer();
+}
+
 function setTimerMode(mode) {
   if (!["countdown", "countup"].includes(mode)) return;
   const task = getCurrentTask();
@@ -584,11 +579,11 @@ function startTimer() {
   render();
 }
 
-function pauseTimer() {
+function pauseTimer(shouldRender = true) {
   stopTimer();
   state.timer.running = false;
   saveState();
-  render();
+  if (shouldRender) render();
 }
 
 function stopTimer() {
@@ -602,6 +597,7 @@ function tickTimer() {
     pauseTimer();
     return;
   }
+  addTaskFocusSecond(task, todayKey(), 1);
   task.actualSeconds = (task.actualSeconds || 0) + 1;
   if (state.timer.mode === "countup") {
     state.timer.seconds += 1;
@@ -700,7 +696,7 @@ function completeTaskById(taskId, message = "任务已完成，已记录在今�
   }
   stopTimer();
   state.timer.running = false;
-  task.actualSeconds = Math.max(task.actualSeconds || 0, totalSessionSeconds(task.sessions));
+  task.actualSeconds = Math.max(task.actualSeconds || 0, totalSessionSeconds(task.sessions), sumDailySeconds(task.dailySeconds));
   state.history.unshift({ ...task, completedAt: new Date().toISOString() });
   state.history = state.history.slice(0, 500);
   selectFallbackTask();
@@ -744,18 +740,22 @@ function recordTaskSession(task, seconds) {
   task.sessions.push({ seconds: Math.round(seconds), mode: state.timer.mode, endedAt: new Date().toISOString() });
 }
 
+function addTaskFocusSecond(task, day, seconds) {
+  task.dailySeconds = task.dailySeconds && typeof task.dailySeconds === "object" ? task.dailySeconds : {};
+  task.dailySeconds[day] = Math.max(0, Number(task.dailySeconds[day] || 0) + seconds);
+}
+
 function getReflection(key = todayKey()) {
   state.reflections[key] = migrateReflection(state.reflections[key], key);
   return state.reflections[key];
 }
 
-function setReflectionMood(mood) {
+function setReflectionScore(score) {
   const reflection = getReflection(todayKey());
-  reflection.mood = reflection.mood === mood ? "" : mood;
+  reflection.moodScore = reflection.moodScore === score ? 0 : score;
   reflection.updatedAt = new Date().toISOString();
   saveState();
   renderReflection();
-  renderHistory();
 }
 
 function saveReflectionFromInputs() {
@@ -767,22 +767,73 @@ function saveReflectionFromInputs() {
   els.reflectionSavedAt.textContent = `已保存 ${formatDateTime(reflection.updatedAt)}`;
 }
 
+function addStagePlan(event) {
+  event.preventDefault();
+  const title = els.planTitle.value.trim();
+  const goal = els.planGoal.value.trim();
+  const route = els.planRoute.value.trim();
+  if (!title && !goal && !route) {
+    showNotice("先写下一个主要任务或实现路线。");
+    return;
+  }
+  state.stagePlans.unshift({
+    id: makeId(),
+    title: title || "未命名阶段计划",
+    goal,
+    route,
+    status: els.planStatus.value || "active",
+    updatedAt: new Date().toISOString()
+  });
+  els.planTitle.value = "";
+  els.planGoal.value = "";
+  els.planRoute.value = "";
+  els.planStatus.value = "active";
+  saveState();
+  renderPlans();
+}
+
+function cyclePlanStatus(planId) {
+  const order = ["active", "next", "blocked", "done"];
+  const plan = state.stagePlans.find((item) => item.id === planId);
+  if (!plan) return;
+  const index = order.indexOf(plan.status);
+  plan.status = order[(index + 1) % order.length];
+  plan.updatedAt = new Date().toISOString();
+  saveState();
+  renderPlans();
+}
+
+function updatePlanStatus(planId, status) {
+  const plan = state.stagePlans.find((item) => item.id === planId);
+  if (!plan) return;
+  plan.status = status;
+  plan.updatedAt = new Date().toISOString();
+  saveState();
+  renderPlans();
+}
+
+function deleteStagePlan(planId) {
+  state.stagePlans = state.stagePlans.filter((item) => item.id !== planId);
+  saveState();
+  renderPlans();
+}
+
 function exportHistory() {
   const used = new Set();
-  const rows = [["日期", "任务", "标签", "计划分钟", "实际分钟", "完成时间", "专注段", "今日心情", "感想标题", "感想内容", "感想更新时间"]];
+  const rows = [["日期", "任务", "标签", "计划分钟", "实际分钟", "完成时间", "专注段", "今日心情评分", "感想标题", "感想内容", "感想更新时间"]];
   state.history.forEach((item) => {
     const day = getLocalDayKey(item.completedAt);
     const reflection = state.reflections[day] ? migrateReflection(state.reflections[day], day) : null;
-    if (reflection?.title || reflection?.content || reflection?.mood) used.add(day);
+    if (reflection?.title || reflection?.content || reflection?.moodScore) used.add(day);
     rows.push([
       day,
       item.title,
       item.tag || "",
       item.minutes,
-      Math.round((item.actualSeconds || 0) / 60),
+      Math.round(getTaskDaySeconds(item, day) / 60),
       item.completedAt || "",
-      formatSessions(item.sessions),
-      getMoodLabel(reflection?.mood),
+      formatSessionsForDay(item.sessions, day),
+      reflection?.moodScore || "",
       reflection?.title || "",
       reflection?.content || "",
       reflection?.updatedAt || ""
@@ -790,8 +841,8 @@ function exportHistory() {
   });
   Object.entries(state.reflections).sort(([a], [b]) => b.localeCompare(a)).forEach(([day, raw]) => {
     const reflection = migrateReflection(raw, day);
-    if (!used.has(day) && (reflection.title || reflection.content || reflection.mood)) {
-      rows.push([day, "仅感想", "", "", "", reflection.updatedAt || "", "", getMoodLabel(reflection.mood), reflection.title, reflection.content, reflection.updatedAt || ""]);
+    if (!used.has(day) && (reflection.title || reflection.content || reflection.moodScore)) {
+      rows.push([day, "仅感想", "", "", "", reflection.updatedAt || "", "", reflection.moodScore || "", reflection.title, reflection.content, reflection.updatedAt || ""]);
     }
   });
   const blob = new Blob([`\ufeff${rows.map((row) => row.map(csvCell).join(",")).join("\n")}`], { type: "text/csv;charset=utf-8" });
@@ -987,23 +1038,35 @@ function getTodayCompletedTasks() {
   return state.history.filter((task) => getLocalDayKey(task.completedAt) === key);
 }
 
-function getMoodLabel(value) {
-  if (!value) return "";
-  return MOODS.find((mood) => mood.value === value)?.label || "";
+function getTodayFocusSeconds() {
+  const key = todayKey();
+  const taskSeconds = state.tasks.reduce((sum, task) => sum + getTaskDaySeconds(task, key), 0);
+  const historySeconds = state.history.reduce((sum, task) => sum + getTaskDaySeconds(task, key), 0);
+  return taskSeconds + historySeconds;
+}
+
+function getTaskDaySeconds(task, day) {
+  const daily = task?.dailySeconds && typeof task.dailySeconds === "object" ? Number(task.dailySeconds[day] || 0) : 0;
+  if (daily > 0) return daily;
+  return (task?.sessions || []).reduce((sum, session) => {
+    return isSameDay(session.endedAt, day) ? sum + (Number(session.seconds) || 0) : sum;
+  }, 0);
 }
 
 function makeTask(title, minutes = 25, tag = "") {
-  return { id: makeId(), title, minutes, tag, actualSeconds: 0, sessions: [], createdAt: new Date().toISOString() };
+  return { id: makeId(), title, minutes, tag, actualSeconds: 0, dailySeconds: {}, sessions: [], createdAt: new Date().toISOString() };
 }
 
 function migrateTask(task = {}) {
+  const sessions = Array.isArray(task.sessions) ? task.sessions.map(migrateSession) : [];
   return {
     id: task.id || makeId(),
     title: task.title || "未命名任务",
     minutes: clamp(Number(task.minutes || task.duration || 25), 1, 240),
     tag: task.tag || "",
     actualSeconds: Number(task.actualSeconds || 0),
-    sessions: Array.isArray(task.sessions) ? task.sessions.map(migrateSession) : [],
+    dailySeconds: migrateDailySeconds(task.dailySeconds, sessions),
+    sessions,
     createdAt: task.createdAt || new Date().toISOString()
   };
 }
@@ -1018,6 +1081,20 @@ function migrateSession(session = {}) {
     mode: ["countdown", "countup"].includes(session.mode) ? session.mode : "countdown",
     endedAt: session.endedAt || new Date().toISOString()
   };
+}
+
+function migrateDailySeconds(dailySeconds, sessions = []) {
+  const result = {};
+  if (dailySeconds && typeof dailySeconds === "object") {
+    Object.entries(dailySeconds).forEach(([day, seconds]) => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(day)) result[day] = Math.max(0, Number(seconds || 0));
+    });
+  }
+  sessions.forEach((session) => {
+    const day = getLocalDayKey(session.endedAt);
+    if (!result[day]) result[day] = Math.max(0, Number(session.seconds || 0));
+  });
+  return result;
 }
 
 function migrateTimer(timer = {}) {
@@ -1040,10 +1117,22 @@ function migrateReflections(reflections) {
 }
 
 function migrateReflection(value, key = todayKey()) {
-  if (typeof value === "string") return { title: `${key} 感想`, content: value, mood: "", updatedAt: "" };
+  if (typeof value === "string") return { title: `${key} 感想`, content: value, moodScore: 0, updatedAt: "" };
   const content = String(value?.content || value?.markdown || value?.body || "");
-  const mood = MOODS.some((item) => item.value === value?.mood) ? value.mood : "";
-  return { title: String(value?.title || ""), content, mood, updatedAt: value?.updatedAt || "" };
+  const score = Number(value?.moodScore || 0) || MOOD_MAP[value?.mood] || 0;
+  return { title: String(value?.title || ""), content, moodScore: clamp(score, 0, 5), updatedAt: value?.updatedAt || "" };
+}
+
+function migrateStagePlans(plans) {
+  if (!Array.isArray(plans)) return [];
+  return plans.map((plan) => ({
+    id: plan.id || makeId(),
+    title: String(plan.title || "未命名阶段计划"),
+    goal: String(plan.goal || ""),
+    route: String(plan.route || ""),
+    status: PLAN_STATUS[plan.status] ? plan.status : "active",
+    updatedAt: plan.updatedAt || new Date().toISOString()
+  })).slice(0, 30);
 }
 
 function migrateSettings(settings = {}) {
@@ -1051,8 +1140,10 @@ function migrateSettings(settings = {}) {
   const hasImage = Boolean(settings.backgroundImagePath);
   const wantsImage = settings.backgroundMode === "image" || settings.backgroundPreset === "image";
   const savedPreset = BACKGROUNDS[settings.backgroundPreset] ? settings.backgroundPreset : "dew";
+  const activeView = normalizeViewName(settings.activeView || "today");
   return {
     ...settings,
+    activeView: ["today", "focus", "knowledge", "plan"].includes(activeView) ? activeView : "today",
     theme: THEMES[theme] ? theme : "green",
     tags: Array.from(new Set([...(Array.isArray(settings.tags) ? settings.tags : []), ...DEFAULT_TAGS].filter(Boolean))),
     showBubbleTimer: settings.showBubbleTimer !== false,
@@ -1063,25 +1154,6 @@ function migrateSettings(settings = {}) {
     backgroundImagePath: settings.backgroundImagePath || "",
     panelBlur: clamp(Number(settings.panelBlur || 18), 8, 30)
   };
-}
-
-function groupHistoryByDay() {
-  const map = new Map();
-  state.history.forEach((item) => {
-    const key = getLocalDayKey(item.completedAt);
-    const current = map.get(key) || { key, count: 0, seconds: 0 };
-    current.count += 1;
-    current.seconds += item.actualSeconds || 0;
-    map.set(key, current);
-  });
-  Object.entries(state.reflections || {}).forEach(([key, raw]) => {
-    const reflection = migrateReflection(raw, key);
-    if (!reflection.title && !reflection.content && !reflection.mood) return;
-    const current = map.get(key) || { key, count: 0, seconds: 0 };
-    current.hasReflection = true;
-    map.set(key, current);
-  });
-  return Array.from(map.values()).sort((a, b) => b.key.localeCompare(a.key));
 }
 
 function addKnownTag(tag) {
@@ -1125,12 +1197,17 @@ function formatFocus(seconds) {
   return minutes >= 60 ? `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ""}` : `${minutes}m`;
 }
 
-function formatSessions(sessions = []) {
-  return sessions.length ? sessions.map((session) => `${session.mode === "countup" ? "正" : "倒"} ${formatFocus(session.seconds)}`).join(" / ") : "暂无分段记录";
+function formatSessionsForDay(sessions = [], day = todayKey()) {
+  const lines = sessions.filter((session) => isSameDay(session.endedAt, day));
+  return lines.length ? lines.map((session) => `${session.mode === "countup" ? "正" : "倒"} ${formatFocus(session.seconds)}`).join(" / ") : "暂无分段记录";
 }
 
 function totalSessionSeconds(sessions = []) {
   return sessions.reduce((sum, session) => sum + (session.seconds || 0), 0);
+}
+
+function sumDailySeconds(dailySeconds = {}) {
+  return Object.values(dailySeconds || {}).reduce((sum, seconds) => sum + (Number(seconds) || 0), 0);
 }
 
 function formatDateTime(value) {
@@ -1151,6 +1228,14 @@ function getLocalDayKey(value) {
 
 function todayKey() {
   return getLocalDayKey(new Date().toISOString());
+}
+
+function isSameDay(value, day) {
+  return getLocalDayKey(value) === day;
+}
+
+function normalizeViewName(view) {
+  return view === "history" ? "plan" : view;
 }
 
 function csvCell(value) {
