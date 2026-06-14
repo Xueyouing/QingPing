@@ -110,22 +110,46 @@
         </section>
 
         <section class="view" id="planView" aria-label="阶段计划">
-          <form class="plan-form" id="planForm">
-            <input id="planTitle" type="text" placeholder="主要任务" autocomplete="off">
-            <input id="planGoal" type="text" placeholder="阶段目标" autocomplete="off">
-            <textarea id="planRoute" placeholder="实现路线：先做什么，再做什么，完成标准是什么。"></textarea>
-            <div class="plan-form-actions">
-              <select id="planStatus" aria-label="计划状态">
-                <option value="active">推进中</option>
-                <option value="next">下一步</option>
-                <option value="blocked">受阻</option>
-                <option value="done">完成</option>
-              </select>
-              <button class="primary-button" type="submit">保存计划</button>
+          <div class="plan-screen" id="planListScreen">
+            <div class="section-title plan-titlebar">
+              <span>主要任务</span>
+              <button class="secondary-button compact-button" id="newPlanButton" type="button">新增</button>
             </div>
+            <ul class="plan-list" id="planList"></ul>
+          </div>
+
+          <form class="plan-create" id="planCreateForm" hidden>
+            <div class="section-title plan-titlebar">
+              <span>新增主要任务</span>
+              <button class="text-button" id="cancelPlanCreate" type="button">返回</button>
+            </div>
+            <input id="planTitle" type="text" placeholder="输入主要任务名称" autocomplete="off">
+            <button class="primary-button wide-button" type="submit">创建任务</button>
           </form>
-          <div class="section-title"><span>阶段计划</span><small id="planMeta">0项</small></div>
-          <ul class="plan-list" id="planList"></ul>
+
+          <article class="plan-detail" id="planDetail" hidden>
+            <div class="section-title plan-titlebar">
+              <button class="text-button" id="backPlanList" type="button">返回</button>
+              <button class="text-button danger" id="deletePlan" type="button">删除</button>
+            </div>
+            <input class="plan-detail-title" id="planDetailTitle" type="text" placeholder="主要任务名称" autocomplete="off">
+            <div class="plan-detail-grid">
+              <label><span>状态</span><select id="planDetailStatus"><option value="active">推进中</option><option value="next">下一步</option><option value="blocked">受阻</option><option value="done">完成</option></select></label>
+              <label><span>进度</span><input id="planProgress" type="range" min="0" max="100" step="5"></label>
+              <label><span>开始</span><input id="planStartDate" type="date"></label>
+              <label><span>截止</span><input id="planDueDate" type="date"></label>
+            </div>
+            <div class="plan-progress-readout"><span id="planProgressText">0%</span><b></b></div>
+            <label class="plan-wide-field"><span>总体目标</span><textarea id="planOverallGoal" placeholder="这个主要任务最终要达成什么。"></textarea></label>
+            <form class="milestone-form" id="milestoneForm">
+              <input id="milestoneInput" type="text" placeholder="新增阶段目标" autocomplete="off">
+              <button class="secondary-button" type="submit">添加</button>
+            </form>
+            <ul class="milestone-list" id="milestoneList"></ul>
+            <label class="plan-wide-field"><span>实现路线</span><textarea id="planRoute" placeholder="拆解路线、依赖、下一步动作和完成标准。"></textarea></label>
+            <label class="plan-wide-field"><span>备注</span><textarea id="planNotes" placeholder="风险、灵感、复盘、临时想法。"></textarea></label>
+            <small class="plan-updated" id="planUpdatedAt">尚未更新</small>
+          </article>
         </section>
 
         <div class="resize-zone resize-n" data-edge="n"></div>

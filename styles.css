@@ -335,7 +335,7 @@ svg {
 
 #todayView.is-active {
   display: grid;
-  grid-template-rows: auto auto auto minmax(104px, 1fr) auto minmax(86px, .75fr);
+  grid-template-rows: auto auto auto auto auto auto;
   min-height: 0;
 }
 
@@ -444,6 +444,7 @@ textarea:focus {
 .plan-list {
   display: grid;
   gap: 0;
+  align-content: start;
   max-height: none;
   margin: 8px 0 0;
   padding: 8px 12px;
@@ -911,23 +912,39 @@ textarea:focus {
   margin-top: 12px;
 }
 
-.plan-form {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
+.compact-button {
+  min-height: 30px;
+  padding: 0 12px;
 }
 
-.plan-form textarea {
-  min-height: 76px;
-  resize: none;
-  padding: 10px;
-  line-height: 1.55;
+.plan-screen,
+.plan-create,
+.plan-detail {
+  min-height: 0;
 }
 
-.plan-form-actions {
+.plan-titlebar {
+  margin-top: 0;
+  padding-right: 6px;
+}
+
+.plan-create {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, var(--panel-card-alpha));
+}
+
+.plan-create[hidden],
+.plan-detail[hidden],
+.plan-screen[hidden] {
+  display: none;
+}
+
+.plan-create .wide-button {
+  margin-top: 0;
 }
 
 .plan-list {
@@ -938,12 +955,22 @@ textarea:focus {
 }
 
 .plan-item {
-  display: grid;
-  gap: 7px;
-  padding: 11px;
+  display: block;
+  padding: 0;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(255, 255, 255, var(--panel-card-alpha));
+  overflow: hidden;
+}
+
+.plan-card-button {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
 }
 
 .plan-item-head {
@@ -980,10 +1007,134 @@ textarea:focus {
   color: color-mix(in srgb, var(--green-dark) 68%, var(--muted));
 }
 
-.plan-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+.plan-progress-mini,
+.plan-progress-readout {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(66, 166, 90, 0.12);
+  overflow: hidden;
+}
+
+.plan-progress-mini i,
+.plan-progress-readout b {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--green);
+}
+
+.plan-card-button small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.plan-detail {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.plan-detail-title {
+  height: 36px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 800;
+  padding: 0 2px;
+}
+
+.plan-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.plan-detail-grid label,
+.plan-wide-field {
+  display: grid;
+  gap: 5px;
+}
+
+.plan-detail-grid span,
+.plan-wide-field span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.plan-progress-readout {
+  position: relative;
+}
+
+.plan-progress-readout span {
+  position: absolute;
+  right: 0;
+  top: -18px;
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.plan-wide-field textarea {
+  min-height: 42px;
+  resize: none;
+  padding: 8px 9px;
+  line-height: 1.45;
+}
+
+.milestone-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.milestone-list {
+  display: grid;
+  gap: 5px;
+  min-height: 0;
+  max-height: 78px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+}
+
+.milestone-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  border-bottom: 1px solid rgba(66, 166, 90, 0.1);
+}
+
+.milestone-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.milestone-item.is-done span {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.milestone-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green-dark);
+}
+
+.plan-updated {
+  color: var(--muted);
+  font-size: 12px;
+  text-align: right;
 }
 
 .text-button.danger {
@@ -1421,8 +1572,10 @@ select,
 textarea,
 .view-nav,
 .task-list,
-.plan-form,
+.plan-create,
+.plan-detail,
 .plan-list,
+.milestone-list,
 .reflection-book,
 .settings,
 .notice,
