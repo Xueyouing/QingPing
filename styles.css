@@ -102,7 +102,7 @@ button:disabled {
   isolation: isolate;
   width: auto;
   height: auto;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid rgba(255, 255, 255, var(--panel-border-alpha));
   border-radius: 18px;
   overflow: hidden;
@@ -295,8 +295,8 @@ svg {
 
 .view-nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
   margin-top: 14px;
   padding: 4px;
   border: 1px solid var(--line);
@@ -341,7 +341,7 @@ svg {
 
 .summary-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -377,10 +377,14 @@ svg {
 
 .task-form {
   display: grid;
-  grid-template-columns: 1fr 92px 58px;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 58px;
+  gap: 6px;
   margin-top: 12px;
-  padding: 8px;
+  padding: 7px;
+}
+
+.task-form #taskInput {
+  grid-column: 1 / -1;
 }
 
 .task-form .is-hidden {
@@ -388,7 +392,11 @@ svg {
 }
 
 .task-form:has(#customTagInput:not(.is-hidden)) {
-  grid-template-columns: 1fr 82px 92px 58px;
+  grid-template-columns: 72px minmax(0, 1fr) 58px;
+}
+
+.task-form:has(#customTagInput:not(.is-hidden)) #taskInput {
+  grid-column: 1 / -1;
 }
 
 input,
@@ -670,8 +678,8 @@ textarea:focus {
 
 .focus-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 58px;
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
   width: 100%;
 }
 
@@ -690,11 +698,15 @@ textarea:focus {
 
 .countdown-builder {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 8px;
-  padding: 7px 10px;
+  padding: 7px 8px;
+}
+
+.countdown-builder .secondary-button {
+  grid-column: 1 / -1;
 }
 
 .countdown-builder[hidden],
@@ -746,7 +758,7 @@ textarea:focus {
 .reflection-head,
 .reflection-toolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
 }
@@ -789,7 +801,8 @@ textarea:focus {
 .reflection-moods {
   display: flex;
   flex: 1 1 auto;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 5px;
   min-width: 0;
 }
@@ -797,8 +810,8 @@ textarea:focus {
 .mood-button {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 32px;
   border-radius: 10px;
   background: rgba(255, 255, 255, var(--panel-card-alpha));
   color: var(--green-dark);
@@ -897,7 +910,7 @@ textarea:focus {
 .text-button {
   min-height: 36px;
   border-radius: 9px;
-  padding: 0 10px;
+  padding: 0 8px;
   transition: transform 150ms ease-out, background 150ms ease-out, box-shadow 150ms ease-out;
 }
 
