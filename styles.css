@@ -788,14 +788,263 @@ textarea:focus {
 
 .reflection-book {
   display: grid;
-  grid-template-rows: auto auto auto 1fr;
-  gap: 10px;
+  grid-template-rows: auto auto auto auto minmax(118px, 1fr);
+  gap: 8px;
   height: 100%;
   min-height: 318px;
-  padding: 14px;
+  padding: 12px;
   background:
     linear-gradient(90deg, rgba(255, 255, 255, var(--panel-card-alpha)), rgba(255, 255, 255, var(--panel-alpha))),
     repeating-linear-gradient(0deg, transparent 0 31px, rgba(66, 166, 90, 0.08) 32px);
+}
+
+.review-summary {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid rgba(66, 166, 90, 0.14);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 16% 16%, rgba(66, 166, 90, 0.14), transparent 34%),
+    radial-gradient(circle at 92% 6%, rgba(142, 122, 216, 0.16), transparent 32%),
+    rgba(255, 255, 255, calc(var(--panel-card-alpha) + 0.02));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.review-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.review-summary-head div:first-child {
+  display: grid;
+  gap: 1px;
+}
+
+.review-summary-head span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.review-summary-head strong {
+  color: var(--green-dark);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.review-chart-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid rgba(66, 166, 90, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.review-chart-tabs button {
+  min-height: 24px;
+  border-radius: 999px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.review-chart-tabs button.is-active {
+  background: var(--green);
+  color: #fff;
+}
+
+.review-chart-shell {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  min-height: 126px;
+}
+
+.review-chart-shell.is-ring {
+  grid-template-columns: 126px minmax(0, 1fr);
+}
+
+.review-chart-shell.is-ripple,
+.review-chart-shell.is-bars {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+  min-height: 148px;
+}
+
+.review-chart-shell.is-ripple .review-metrics,
+.review-chart-shell.is-bars .review-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.review-ring {
+  display: grid;
+  place-items: center;
+  width: 126px;
+  height: 126px;
+  border-radius: 50%;
+  background: conic-gradient(rgba(66, 166, 90, 0.18), rgba(142, 122, 216, 0.12), rgba(58, 154, 178, 0.14), rgba(66, 166, 90, 0.18));
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.1), 0 12px 26px rgba(66, 166, 90, 0.1);
+}
+
+.review-ring-core {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.12);
+}
+
+.review-ring-core strong {
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.review-ring-core span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.review-ripple,
+.review-bars {
+  display: grid;
+  gap: 6px;
+  align-self: stretch;
+  min-height: 82px;
+}
+
+.review-ripple[hidden],
+.review-bars[hidden],
+.review-ring[hidden] {
+  display: none;
+}
+
+.ripple-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 21px;
+  padding-left: 9px;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ripple-color) 28%, transparent) 0 var(--share), rgba(255, 255, 255, 0.56) var(--share) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ripple-color) 18%, transparent);
+}
+
+.ripple-line strong,
+.review-bar-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.ripple-line span,
+.review-bar-row em {
+  padding-right: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.review-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 72px) minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 7px;
+  min-height: 22px;
+}
+
+.review-bar-row b {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(66, 166, 90, 0.1);
+}
+
+.review-bar-row i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--bar-color);
+}
+
+.review-metrics {
+  display: grid;
+  gap: 6px;
+}
+
+.review-metrics span {
+  display: grid;
+  gap: 1px;
+  padding: 7px 8px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.64);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.08);
+}
+
+.review-metrics b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--green-dark);
+  font-size: 13px;
+}
+
+.review-metrics small,
+.review-insight,
+.review-empty-line {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.review-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.review-legend li {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.review-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.review-legend span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 11px;
+}
+
+.review-legend b {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.review-insight {
+  margin: 0;
+  line-height: 1.45;
 }
 
 .reflection-head,
@@ -897,7 +1146,7 @@ textarea:focus {
 .reflection-editor textarea {
   width: 100%;
   height: 100%;
-  min-height: 210px;
+  min-height: 118px;
   border-radius: 13px;
   background: rgba(255, 255, 255, var(--panel-card-alpha));
   resize: none;

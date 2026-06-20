@@ -38,7 +38,7 @@
         <nav class="view-nav" aria-label="界面切换">
           <button class="view-tab is-active" data-view="today" type="button">今日</button>
           <button class="view-tab" data-view="focus" type="button">专注</button>
-          <button class="view-tab" data-view="knowledge" type="button">感想</button>
+          <button class="view-tab" data-view="knowledge" type="button">回顾</button>
           <button class="view-tab" data-view="plan" type="button">计划</button>
         </nav>
 
@@ -92,8 +92,38 @@
           <div class="segment-strip" id="segmentQueue" aria-label="倒计时队列"></div>
         </section>
 
-        <section class="view" id="knowledgeView" aria-label="今日感想">
+        <section class="view" id="knowledgeView" aria-label="今日回顾">
           <article class="reflection-book">
+            <section class="review-summary" aria-label="今日时间分布">
+              <div class="review-summary-head">
+                <div>
+                  <span>时间分布</span>
+                  <strong id="reviewTotal">0m</strong>
+                </div>
+                <div class="review-chart-tabs" aria-label="时间分布方案">
+                  <button class="is-active" data-review-chart="ring" type="button">青萍环</button>
+                  <button data-review-chart="ripple" type="button">涟漪</button>
+                  <button data-review-chart="bars" type="button">排行</button>
+                </div>
+              </div>
+              <div class="review-chart-shell" id="reviewChartShell">
+                <div class="review-ring" id="reviewRing" aria-hidden="true">
+                  <div class="review-ring-core">
+                    <strong id="reviewRingTotal">0m</strong>
+                    <span>今日专注</span>
+                  </div>
+                </div>
+                <div class="review-ripple" id="reviewRipple" hidden></div>
+                <div class="review-bars" id="reviewBars" hidden></div>
+                <div class="review-metrics">
+                  <span><b id="reviewTopTask">暂无</b><small>主线任务</small></span>
+                  <span><b id="reviewSessionCount">0</b><small>专注段</small></span>
+                  <span><b id="reviewBalance">未开始</b><small>节奏判断</small></span>
+                </div>
+              </div>
+              <ul class="review-legend" id="reviewLegend"></ul>
+              <p class="review-insight" id="reviewInsight">开始一段专注后，这里会像水面一样记录今天的时间流向。</p>
+            </section>
             <div class="reflection-head">
               <span id="reflectionDate">今天</span>
               <small id="reflectionSavedAt">今日还未记录</small>
@@ -104,7 +134,7 @@
               <div class="reflection-rating" id="reflectionRating" aria-label="今日心情评分"></div>
             </div>
             <div class="reflection-editor" id="reflectionEditorWrap">
-              <textarea id="reflectionMarkdown" placeholder="给今天留一片青萍：写下风经过时，你心里真正泛起的涟漪。"></textarea>
+              <textarea id="reflectionMarkdown" placeholder="回看今天的时间河流：哪一段值得保留，哪一刻需要重新安放？"></textarea>
             </div>
           </article>
         </section>

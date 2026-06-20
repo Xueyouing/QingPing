@@ -24,6 +24,8 @@ const BACKGROUNDS = {
 };
 const MOOD_LABELS = ["低落", "有点累", "平稳", "清亮", "很好"];
 const MOOD_MAP = { sad: 1, angry: 2, tired: 2, calm: 3, surprised: 4, happy: 5, done: 5, cheer: 5 };
+const REVIEW_CHART_MODES = ["ring", "ripple", "bars"];
+const REVIEW_COLORS = ["#42a65a", "#8e7ad8", "#3a9ab2", "#ffb74d", "#5ebd88", "#b99af2"];
 const PLAN_STATUS = {
   active: "推进中",
   next: "下一步",
@@ -91,6 +93,18 @@ const els = {
   milestoneInput: $("#milestoneInput"),
   milestoneList: $("#milestoneList"),
   exportHistory: $("#exportHistory"),
+  reviewTotal: $("#reviewTotal"),
+  reviewChartShell: $("#reviewChartShell"),
+  reviewRing: $("#reviewRing"),
+  reviewRingTotal: $("#reviewRingTotal"),
+  reviewRipple: $("#reviewRipple"),
+  reviewBars: $("#reviewBars"),
+  reviewTopTask: $("#reviewTopTask"),
+  reviewSessionCount: $("#reviewSessionCount"),
+  reviewBalance: $("#reviewBalance"),
+  reviewLegend: $("#reviewLegend"),
+  reviewInsight: $("#reviewInsight"),
+  reviewChartButtons: [...document.querySelectorAll("[data-review-chart]")],
   reflectionDate: $("#reflectionDate"),
   reflectionTitle: $("#reflectionTitle"),
   reflectionText: $("#reflectionMarkdown"),
@@ -159,6 +173,7 @@ function bindEvents() {
   els.resetTimer.addEventListener("click", resetTimer);
   els.addCountdown.addEventListener("click", addCountdownSegment);
   els.exportHistory.addEventListener("click", exportHistory);
+  els.reviewChartButtons.forEach((button) => button.addEventListener("click", () => setReviewChartMode(button.dataset.reviewChart)));
   els.reflectionTitle.addEventListener("input", saveReflectionFromInputs);
   els.reflectionText.addEventListener("input", saveReflectionFromInputs);
   els.taskSelect.addEventListener("change", () => selectTask(els.taskSelect.value));
@@ -218,6 +233,7 @@ function loadState() {
       bubbleOpacity: 70,
       panelOpacity: 92,
       showBubbleTimer: true,
+      reviewChartMode: "ring",
       backgroundPreset: "dew",
       backgroundMode: "preset",
       backgroundImagePath: "",
@@ -305,7 +321,7 @@ function renderFocus() {
   els.timerText.disabled = running || state.timer.mode !== "countdown";
   els.focusLabel.textContent = task ? (running ? `${modeLabel}中` : modeLabel) : "今日清空";
   els.focusTitle.textContent = task ? task.title : "没有待办";
-  els.focusMeta.textContent = task ? `${task.minutes} 分钟 · ${task.tag || "未分类"} · 今日 ${formatFocus(getTaskDaySeconds(task, todayKey()))}` : "可以休息一下，或写下今日感想。";
+  els.focusMeta.textContent = task ? `${task.minutes} 分钟 · ${task.tag || "未分类"} · 今日 ${formatFocus(getTaskDaySeconds(task, todayKey()))}` : "可以休息一下，或写下今日回顾。";
   els.timerText.textContent = formatSeconds(state.timer.seconds);
   els.toggleTimer.textContent = running ? "暂停" : "开始";
   els.toggleTimer.disabled = !task;
@@ -375,8 +391,113 @@ function renderReflection() {
   els.reflectionDate.textContent = formatDayTitle(todayKey());
   if (document.activeElement !== els.reflectionTitle) els.reflectionTitle.value = reflection.title;
   if (document.activeElement !== els.reflectionText) els.reflectionText.value = reflection.content;
-  els.reflectionSavedAt.textContent = reflection.updatedAt ? `已保存 ${formatDateTime(reflection.updatedAt)}` : "今日还未记录";
+  els.reflectionSavedAt.textContent = reflection.updatedAt ? `已保存 ${formatDateTime(reflection.updatedAt)}` : "今日还未回顾";
   renderMoodRating(reflection.moodScore);
+  renderReviewSummary();
+}
+
+function renderReviewSummary() {
+  const mode = REVIEW_CHART_MODES.includes(state.settings.reviewChartMode) ? state.settings.reviewChartMode : "ring";
+  const items = getTodayReviewDistribution();
+  const total = items.reduce((sum, item) => sum + item.seconds, 0);
+  const top = items[0];
+  const sessionCount = items.reduce((sum, item) => sum + item.sessions, 0);
+  const topShare = total && top ? top.seconds / total : 0;
+  const balance = getReviewBalance(items, topShare);
+
+  els.reviewChartButtons.forEach((button) => button.classList.toggle("is-active", button.dataset.reviewChart === mode));
+  els.reviewChartShell.classList.remove("is-ring", "is-ripple", "is-bars");
+  els.reviewChartShell.classList.add(`is-${mode}`);
+  els.reviewTotal.textContent = formatFocus(total);
+  els.reviewRingTotal.textContent = formatFocus(total);
+  els.reviewTopTask.textContent = top ? top.title : "暂无";
+  els.reviewSessionCount.textContent = String(sessionCount);
+  els.reviewBalance.textContent = balance;
+  els.reviewInsight.textContent = getReviewInsight(items, total, topShare);
+
+  els.reviewRing.hidden = mode !== "ring";
+  els.reviewRipple.hidden = mode !== "ripple";
+  els.reviewBars.hidden = mode !== "bars";
+  renderReviewRing(items, total);
+  renderReviewRipple(items, total);
+  renderReviewBars(items, total);
+  renderReviewLegend(items, total);
+}
+
+function renderReviewRing(items, total) {
+  if (!items.length || !total) {
+    els.reviewRing.style.background = "conic-gradient(rgba(66, 166, 90, 0.18), rgba(142, 122, 216, 0.12), rgba(58, 154, 178, 0.14), rgba(66, 166, 90, 0.18))";
+    return;
+  }
+  let cursor = 0;
+  const stops = items.map((item, index) => {
+    const start = cursor;
+    cursor += (item.seconds / total) * 100;
+    const color = REVIEW_COLORS[index % REVIEW_COLORS.length];
+    return `${color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+  });
+  els.reviewRing.style.background = `conic-gradient(${stops.join(", ")})`;
+}
+
+function renderReviewRipple(items, total) {
+  els.reviewRipple.innerHTML = "";
+  if (!items.length || !total) {
+    const empty = document.createElement("span");
+    empty.className = "review-empty-line";
+    empty.textContent = "暂无时间涟漪";
+    els.reviewRipple.appendChild(empty);
+    return;
+  }
+  items.slice(0, 5).forEach((item, index) => {
+    const line = document.createElement("div");
+    line.className = "ripple-line";
+    line.style.setProperty("--share", `${Math.max(14, (item.seconds / total) * 100)}%`);
+    line.style.setProperty("--ripple-color", REVIEW_COLORS[index % REVIEW_COLORS.length]);
+    const title = document.createElement("strong");
+    const time = document.createElement("span");
+    title.textContent = item.title;
+    time.textContent = formatFocus(item.seconds);
+    line.append(title, time);
+    els.reviewRipple.appendChild(line);
+  });
+}
+
+function renderReviewBars(items, total) {
+  els.reviewBars.innerHTML = "";
+  if (!items.length || !total) {
+    const empty = document.createElement("span");
+    empty.className = "review-empty-line";
+    empty.textContent = "完成一段任务后生成排行";
+    els.reviewBars.appendChild(empty);
+    return;
+  }
+  items.slice(0, 5).forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "review-bar-row";
+    row.style.setProperty("--bar-color", REVIEW_COLORS[index % REVIEW_COLORS.length]);
+    row.innerHTML = "<span></span><b><i></i></b><em></em>";
+    row.querySelector("span").textContent = item.title;
+    row.querySelector("i").style.width = `${Math.max(4, (item.seconds / total) * 100)}%`;
+    row.querySelector("em").textContent = formatFocus(item.seconds);
+    els.reviewBars.appendChild(row);
+  });
+}
+
+function renderReviewLegend(items, total) {
+  els.reviewLegend.innerHTML = "";
+  const visible = items.slice(0, 4);
+  if (!visible.length || !total) {
+    els.reviewLegend.innerHTML = `<li><i></i><span>暂无任务时间</span><b>0%</b></li>`;
+    return;
+  }
+  visible.forEach((item, index) => {
+    const row = document.createElement("li");
+    row.innerHTML = "<i></i><span></span><b></b>";
+    row.querySelector("i").style.background = REVIEW_COLORS[index % REVIEW_COLORS.length];
+    row.querySelector("span").textContent = item.title;
+    row.querySelector("b").textContent = `${Math.round((item.seconds / total) * 100)}%`;
+    els.reviewLegend.appendChild(row);
+  });
 }
 
 function renderMoodRating(score) {
@@ -827,6 +948,13 @@ function setReflectionScore(score) {
   renderReflection();
 }
 
+function setReviewChartMode(mode) {
+  if (!REVIEW_CHART_MODES.includes(mode)) return;
+  state.settings.reviewChartMode = mode;
+  saveState();
+  renderReviewSummary();
+}
+
 function saveReflectionFromInputs() {
   const reflection = getReflection(todayKey());
   reflection.title = els.reflectionTitle.value.trim();
@@ -950,7 +1078,7 @@ function deleteActivePlan() {
 
 function exportHistory() {
   const used = new Set();
-  const rows = [["日期", "任务", "标签", "计划分钟", "实际分钟", "完成时间", "专注段", "今日心情评分", "感想标题", "感想内容", "感想更新时间"]];
+  const rows = [["日期", "任务", "标签", "计划分钟", "实际分钟", "完成时间", "专注段", "今日心情评分", "回顾标题", "回顾内容", "回顾更新时间"]];
   state.history.forEach((item) => {
     const day = getLocalDayKey(item.completedAt);
     const reflection = state.reflections[day] ? migrateReflection(state.reflections[day], day) : null;
@@ -972,7 +1100,7 @@ function exportHistory() {
   Object.entries(state.reflections).sort(([a], [b]) => b.localeCompare(a)).forEach(([day, raw]) => {
     const reflection = migrateReflection(raw, day);
     if (!used.has(day) && (reflection.title || reflection.content || reflection.moodScore)) {
-      rows.push([day, "仅感想", "", "", "", reflection.updatedAt || "", "", reflection.moodScore || "", reflection.title, reflection.content, reflection.updatedAt || ""]);
+      rows.push([day, "仅回顾", "", "", "", reflection.updatedAt || "", "", reflection.moodScore || "", reflection.title, reflection.content, reflection.updatedAt || ""]);
     }
   });
   const blob = new Blob([`\ufeff${rows.map((row) => row.map(csvCell).join(",")).join("\n")}`], { type: "text/csv;charset=utf-8" });
@@ -1175,6 +1303,47 @@ function getTodayFocusSeconds() {
   return taskSeconds + historySeconds;
 }
 
+function getTodayReviewDistribution() {
+  const day = todayKey();
+  const bucket = new Map();
+  [...state.tasks, ...state.history].forEach((task) => {
+    const seconds = getTaskDaySeconds(task, day);
+    if (!seconds) return;
+    const key = task.id || `${task.title}-${task.createdAt || ""}`;
+    const entry = bucket.get(key) || {
+      title: task.title || "未命名任务",
+      tag: task.tag || "未分类",
+      seconds: 0,
+      sessions: 0
+    };
+    entry.seconds += seconds;
+    entry.sessions += countTaskSessionsForDay(task, day);
+    bucket.set(key, entry);
+  });
+  return [...bucket.values()].sort((a, b) => b.seconds - a.seconds);
+}
+
+function countTaskSessionsForDay(task, day) {
+  return (task?.sessions || []).filter((session) => isSameDay(session.endedAt, day)).length;
+}
+
+function getReviewBalance(items, topShare) {
+  if (!items.length) return "未开始";
+  if (items.length === 1) return "单线推进";
+  if (topShare >= 0.72) return "主线清晰";
+  if (topShare <= 0.42) return "分布均衡";
+  return "节奏稳定";
+}
+
+function getReviewInsight(items, total, topShare) {
+  if (!items.length || !total) return "开始一段专注后，这里会像水面一样记录今天的时间流向。";
+  const top = items[0];
+  if (items.length === 1) return `${top.title} 占据了今天的全部专注，适合在回顾里写下这条主线的推进。`;
+  if (topShare >= 0.72) return `${top.title} 是今天的时间主流，其他任务像支流一样辅助它前进。`;
+  if (topShare <= 0.42) return "今天的时间分布比较均衡，回顾时可以记录切换任务后的精力变化。";
+  return `${top.title} 仍是主要方向，但时间没有过度集中，节奏相对舒展。`;
+}
+
 function getTaskDaySeconds(task, day) {
   const daily = task?.dailySeconds && typeof task.dailySeconds === "object" ? Number(task.dailySeconds[day] || 0) : 0;
   if (daily > 0) return daily;
@@ -1247,7 +1416,7 @@ function migrateReflections(reflections) {
 }
 
 function migrateReflection(value, key = todayKey()) {
-  if (typeof value === "string") return { title: `${key} 感想`, content: value, moodScore: 0, updatedAt: "" };
+  if (typeof value === "string") return { title: `${key} 回顾`, content: value, moodScore: 0, updatedAt: "" };
   const content = String(value?.content || value?.markdown || value?.body || "");
   const score = Number(value?.moodScore || 0) || MOOD_MAP[value?.mood] || 0;
   return { title: String(value?.title || ""), content, moodScore: clamp(score, 0, 5), updatedAt: value?.updatedAt || "" };
@@ -1295,6 +1464,7 @@ function migrateSettings(settings = {}) {
     theme: THEMES[theme] ? theme : "green",
     tags: Array.from(new Set([...(Array.isArray(settings.tags) ? settings.tags : []), ...DEFAULT_TAGS].filter(Boolean))),
     showBubbleTimer: settings.showBubbleTimer !== false,
+    reviewChartMode: REVIEW_CHART_MODES.includes(settings.reviewChartMode) ? settings.reviewChartMode : "ring",
     bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 45, 95),
     panelOpacity: clamp(Number(settings.panelOpacity || 92), 68, 98),
     backgroundMode: wantsImage && hasImage ? "image" : "preset",
