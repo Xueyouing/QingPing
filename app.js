@@ -101,6 +101,20 @@ const els = {
   reviewLegend: $("#reviewLegend"),
   reviewInsight: $("#reviewInsight"),
   reviewChartButtons: [...document.querySelectorAll("[data-review-chart]")],
+  reviewExpand: $("#reviewExpand"),
+  reviewOverlay: $("#reviewOverlay"),
+  reviewOverlayClose: $("#reviewOverlayClose"),
+  reviewExpandedTotal: $("#reviewExpandedTotal"),
+  reviewExpandedShell: $("#reviewExpandedShell"),
+  reviewExpandedRing: $("#reviewExpandedRing"),
+  reviewExpandedRingTotal: $("#reviewExpandedRingTotal"),
+  reviewExpandedRipple: $("#reviewExpandedRipple"),
+  reviewExpandedTopTask: $("#reviewExpandedTopTask"),
+  reviewExpandedSessionCount: $("#reviewExpandedSessionCount"),
+  reviewExpandedBalance: $("#reviewExpandedBalance"),
+  reviewExpandedLegend: $("#reviewExpandedLegend"),
+  reviewExpandedInsight: $("#reviewExpandedInsight"),
+  reviewExpandedChartButtons: [...document.querySelectorAll("[data-review-expanded-chart]")],
   reflectionDate: $("#reflectionDate"),
   reflectionTitle: $("#reflectionTitle"),
   reflectionText: $("#reflectionMarkdown"),
@@ -125,7 +139,7 @@ const els = {
 
 const state = loadState();
 let timerId = null;
-let currentWindowMode = "bubble";
+let currentWindowMode = "panel";
 let windowSwitchTimer = 0;
 let bubblePointer = null;
 let bubbleMoved = false;
@@ -142,9 +156,10 @@ init();
 
 function init() {
   normalizeState();
+  applyLaunchDefaultView();
   bindEvents();
   applySettings();
-  applyWindowMode("bubble");
+  applyWindowMode("panel");
   selectFallbackTask();
   render();
   hydrateDesktop();
@@ -170,6 +185,12 @@ function bindEvents() {
   els.addCountdown.addEventListener("click", addCountdownSegment);
   els.exportHistory.addEventListener("click", exportHistory);
   els.reviewChartButtons.forEach((button) => button.addEventListener("click", () => setReviewChartMode(button.dataset.reviewChart)));
+  els.reviewExpandedChartButtons.forEach((button) => button.addEventListener("click", () => setReviewChartMode(button.dataset.reviewExpandedChart)));
+  els.reviewExpand.addEventListener("click", openReviewOverlay);
+  els.reviewOverlayClose.addEventListener("click", closeReviewOverlay);
+  els.reviewOverlay.addEventListener("click", (event) => {
+    if (event.target === els.reviewOverlay) closeReviewOverlay();
+  });
   els.reflectionTitle.addEventListener("input", saveReflectionFromInputs);
   els.reflectionText.addEventListener("input", saveReflectionFromInputs);
   els.taskSelect.addEventListener("change", () => selectTask(els.taskSelect.value));
@@ -213,6 +234,9 @@ function bindEvents() {
     zone.addEventListener("pointermove", onResizePointerMove);
     zone.addEventListener("pointerup", onResizePointerUp);
     zone.addEventListener("pointercancel", onResizePointerUp);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.reviewOverlay.hidden) closeReviewOverlay();
   });
   desktopBridge?.onWindowModePrepare?.(prepareWindowMode);
   desktopBridge?.onWindowModeCommit?.(commitWindowMode);
@@ -284,6 +308,7 @@ async function hydrateDesktop() {
     if (desktopState) {
       Object.assign(state, mergeState(state, desktopState));
       normalizeState();
+      applyLaunchDefaultView();
       selectFallbackTask();
       render();
       openPanelFromHash();
@@ -295,6 +320,11 @@ async function hydrateDesktop() {
   } catch (error) {
     console.warn("Failed to hydrate desktop state:", error);
   }
+}
+
+function applyLaunchDefaultView() {
+  const route = location.hash.replace("#", "") || new URLSearchParams(location.search).get("view");
+  if (!route) state.settings.activeView = "today";
 }
 
 function saveState() {
@@ -358,7 +388,7 @@ function renderTasks() {
   if (!todayTasks.length) {
     els.taskList.innerHTML = `<li class="empty-state compact"><strong>今天暂时很清爽</strong><span>添加一个小任务，给专注一个落点。</span></li>`;
   } else {
-    todayTasks.slice(0, 12).forEach((task) => {
+    todayTasks.forEach((task) => {
       const item = document.createElement("li");
       item.className = "task-item";
       item.innerHTML = `<div class="task-main"><span class="task-title"></span><span class="task-meta"></span></div><select class="tag-mini"></select><div class="task-actions"><button class="task-icon timer-action" data-action="timer" type="button" title="开始计时">计时</button><button class="task-icon" data-action="done" type="button" title="完成">✓</button><button class="task-icon" data-action="delete" type="button" title="删除">×</button></div>`;
@@ -377,7 +407,7 @@ function renderTasks() {
     els.completedTodayList.innerHTML = `<li class="empty-state mini"><strong>还没有落款</strong><span>完成的事会在这里安静留下。</span></li>`;
     return;
   }
-  completedToday.slice(0, 8).forEach((task) => {
+  completedToday.forEach((task) => {
     const item = document.createElement("li");
     item.className = "completed-item";
     item.innerHTML = `<div class="completed-row"><span class="history-title"></span><small class="history-meta"></small></div><span class="session-line"></span>`;
@@ -422,6 +452,7 @@ function renderReviewSummary() {
   renderReviewRing(items, total);
   renderReviewRipple(items, total);
   renderReviewLegend(items, total);
+  if (!els.reviewOverlay.hidden) renderReviewOverlay();
 }
 
 function renderReviewRing(items, total) {
@@ -476,6 +507,98 @@ function renderReviewLegend(items, total) {
     row.querySelector("span").textContent = item.title;
     row.querySelector("b").textContent = `${Math.round((item.seconds / total) * 100)}%`;
     els.reviewLegend.appendChild(row);
+  });
+}
+
+function openReviewOverlay() {
+  els.reviewOverlay.hidden = false;
+  renderReviewOverlay();
+  window.requestAnimationFrame(() => els.reviewOverlayClose.focus());
+}
+
+function closeReviewOverlay() {
+  els.reviewOverlay.hidden = true;
+  els.reviewExpand.focus();
+}
+
+function renderReviewOverlay() {
+  const mode = state.settings.reviewChartMode === "bars" ? "ripple" : (REVIEW_CHART_MODES.includes(state.settings.reviewChartMode) ? state.settings.reviewChartMode : "ring");
+  const items = getTodayReviewDistribution();
+  const total = items.reduce((sum, item) => sum + item.seconds, 0);
+  const top = items[0];
+  const sessionCount = items.reduce((sum, item) => sum + item.sessions, 0);
+  const topShare = total && top ? top.seconds / total : 0;
+  const balance = getReviewBalance(items, topShare);
+
+  els.reviewExpandedChartButtons.forEach((button) => button.classList.toggle("is-active", button.dataset.reviewExpandedChart === mode));
+  els.reviewExpandedShell.classList.remove("is-ring", "is-ripple");
+  els.reviewExpandedShell.classList.add(`is-${mode}`);
+  els.reviewExpandedTotal.textContent = formatFocus(total);
+  els.reviewExpandedRingTotal.textContent = formatFocus(total);
+  els.reviewExpandedTopTask.textContent = top ? top.title : "暂无";
+  els.reviewExpandedSessionCount.textContent = String(sessionCount);
+  els.reviewExpandedBalance.textContent = balance;
+  els.reviewExpandedInsight.textContent = getReviewInsight(items, total, topShare);
+
+  els.reviewExpandedRing.hidden = mode !== "ring";
+  els.reviewExpandedRipple.hidden = mode !== "ripple";
+  renderReviewExpandedRing(items, total);
+  renderReviewExpandedRipple(items, total);
+  renderReviewExpandedLegend(items, total);
+}
+
+function renderReviewExpandedRing(items, total) {
+  if (!items.length || !total) {
+    els.reviewExpandedRing.style.background = "conic-gradient(rgba(66, 166, 90, 0.18), rgba(142, 122, 216, 0.12), rgba(58, 154, 178, 0.14), rgba(66, 166, 90, 0.18))";
+    return;
+  }
+  let cursor = 0;
+  const stops = items.map((item, index) => {
+    const start = cursor;
+    cursor += (item.seconds / total) * 100;
+    const color = REVIEW_COLORS[index % REVIEW_COLORS.length];
+    return `${color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+  });
+  els.reviewExpandedRing.style.background = `conic-gradient(${stops.join(", ")})`;
+}
+
+function renderReviewExpandedRipple(items, total) {
+  els.reviewExpandedRipple.innerHTML = "";
+  if (!items.length || !total) {
+    const empty = document.createElement("span");
+    empty.className = "review-empty-line";
+    empty.textContent = "暂无时间涟漪";
+    els.reviewExpandedRipple.appendChild(empty);
+    return;
+  }
+  items.slice(0, 8).forEach((item, index) => {
+    const line = document.createElement("div");
+    line.className = "ripple-line";
+    line.style.setProperty("--share", `${Math.max(18, (item.seconds / total) * 100)}%`);
+    line.style.setProperty("--ripple-color", REVIEW_COLORS[index % REVIEW_COLORS.length]);
+    const title = document.createElement("strong");
+    const time = document.createElement("span");
+    title.textContent = item.title;
+    time.textContent = formatFocus(item.seconds);
+    line.append(title, time);
+    els.reviewExpandedRipple.appendChild(line);
+  });
+}
+
+function renderReviewExpandedLegend(items, total) {
+  els.reviewExpandedLegend.innerHTML = "";
+  const visible = items.slice(0, 6);
+  if (!visible.length || !total) {
+    els.reviewExpandedLegend.innerHTML = `<li><i></i><span>暂无任务时间</span><b>0%</b></li>`;
+    return;
+  }
+  visible.forEach((item, index) => {
+    const row = document.createElement("li");
+    row.innerHTML = "<i></i><span></span><b></b>";
+    row.querySelector("i").style.background = REVIEW_COLORS[index % REVIEW_COLORS.length];
+    row.querySelector("span").textContent = item.title;
+    row.querySelector("b").textContent = `${Math.round((item.seconds / total) * 100)}%`;
+    els.reviewExpandedLegend.appendChild(row);
   });
 }
 

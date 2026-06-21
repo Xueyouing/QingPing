@@ -213,15 +213,15 @@ async function chooseBackgroundImage() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: BUBBLE_SIZE,
-    height: BUBBLE_SIZE,
-    minWidth: BUBBLE_SIZE,
-    minHeight: BUBBLE_SIZE,
+    width: PANEL_SIZE.width,
+    height: PANEL_SIZE.height,
+    minWidth: PANEL_MIN_SIZE.width,
+    minHeight: PANEL_MIN_SIZE.height,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
-    resizable: false,
+    resizable: true,
     show: false,
     backgroundColor: "#00000000",
     webPreferences: {
@@ -233,7 +233,7 @@ function createWindow() {
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
   mainWindow.once("ready-to-show", async () => {
-    await setWindowMode("bubble");
+    await setWindowMode("panel");
     mainWindow.show();
   });
   mainWindow.on("resize", () => {

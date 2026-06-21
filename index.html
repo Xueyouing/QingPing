@@ -6,7 +6,7 @@
     <title>青萍</title>
     <link rel="stylesheet" href="styles.css">
   </head>
-  <body class="is-bubble">
+  <body class="is-panel">
     <svg class="qingping-symbols" aria-hidden="true">
       <symbol id="qp-sprout" viewBox="0 0 48 48">
         <path class="ground-line" d="M8 39c8 3 24 3 32 0"/>
@@ -104,6 +104,9 @@
                   <button class="is-active" data-review-chart="ring" type="button">青萍环</button>
                   <button data-review-chart="ripple" type="button">涟漪</button>
                 </div>
+                <button class="review-expand" id="reviewExpand" type="button" aria-label="放大回顾" title="放大回顾">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/><path d="M9 9 3.5 3.5M15 9l5.5-5.5M9 15l-5.5 5.5M15 15l5.5 5.5"/></svg>
+                </button>
               </div>
               <div class="review-chart-shell" id="reviewChartShell">
                 <div class="review-ring" id="reviewRing" aria-hidden="true">
@@ -183,6 +186,40 @@
             <small class="plan-updated" id="planUpdatedAt">尚未更新</small>
           </article>
         </section>
+
+        <div class="review-overlay" id="reviewOverlay" hidden>
+          <section class="review-expanded" aria-label="放大回顾">
+            <header class="review-expanded-head">
+              <div>
+                <span>今日回顾</span>
+                <strong id="reviewExpandedTotal">0m</strong>
+              </div>
+              <div class="review-chart-tabs review-expanded-tabs" aria-label="放大回顾方案">
+                <button class="is-active" data-review-expanded-chart="ring" type="button">青萍环</button>
+                <button data-review-expanded-chart="ripple" type="button">涟漪</button>
+              </div>
+              <button class="icon-button" id="reviewOverlayClose" type="button" aria-label="关闭放大回顾">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </header>
+            <div class="review-expanded-shell" id="reviewExpandedShell">
+              <div class="review-ring review-ring-large" id="reviewExpandedRing" aria-hidden="true">
+                <div class="review-ring-core">
+                  <strong id="reviewExpandedRingTotal">0m</strong>
+                  <span>今日专注</span>
+                </div>
+              </div>
+              <div class="review-ripple review-ripple-large" id="reviewExpandedRipple" hidden></div>
+              <div class="review-metrics review-expanded-metrics">
+                <span><b id="reviewExpandedTopTask">暂无</b><small>主线任务</small></span>
+                <span><b id="reviewExpandedSessionCount">0</b><small>专注段</small></span>
+                <span><b id="reviewExpandedBalance">未开始</b><small>节奏判断</small></span>
+              </div>
+            </div>
+            <ul class="review-legend review-expanded-legend" id="reviewExpandedLegend"></ul>
+            <p class="review-insight review-expanded-insight" id="reviewExpandedInsight">开始一段专注后，这里会像水面一样记录今天的时间流向。</p>
+          </section>
+        </div>
 
         <div class="resize-zone resize-n" data-edge="n"></div>
         <div class="resize-zone resize-s" data-edge="s"></div>
