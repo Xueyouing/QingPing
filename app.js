@@ -566,24 +566,25 @@ function renderPlanDetail(plan) {
 
 function renderMilestones(plan) {
   els.milestoneList.innerHTML = "";
+  els.milestoneList.classList.toggle("is-compact", plan.milestones.length > 6);
   if (!plan.milestones.length) {
     els.milestoneList.innerHTML = `<li class="milestone-empty"><strong>还没有阶段目标</strong><span>先加一个小台阶，涟漪就会展开。</span></li>`;
     return;
   }
   const count = plan.milestones.length;
+  const firstPending = plan.milestones.findIndex((item) => !item.done);
   plan.milestones.forEach((milestone, index) => {
-    const position = getMilestonePosition(index, count);
     const item = document.createElement("li");
     item.className = "milestone-item";
+    item.classList.add(index % 2 ? "is-right" : "is-left");
     item.classList.toggle("is-done", milestone.done);
-    item.style.setProperty("--x", `${position.x}px`);
-    item.style.setProperty("--y", `${position.y}px`);
+    item.classList.toggle("is-current", index === firstPending);
     item.style.setProperty("--node-delay", `${index * 120}ms`);
     item.innerHTML = `<div class="milestone-node"><button class="milestone-toggle" type="button" title="完成/取消阶段目标"></button><input class="milestone-title-input" type="text" autocomplete="off"><small></small></div><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
     item.querySelector(".milestone-toggle").textContent = milestone.done ? "✓" : String(index + 1);
     const titleInput = item.querySelector(".milestone-title-input");
     titleInput.value = milestone.title;
-    item.querySelector("small").textContent = milestone.done ? "完成" : "推进";
+    item.querySelector("small").textContent = milestone.done ? "完成" : (index === firstPending ? "当前" : "推进");
     item.querySelector(".milestone-toggle").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
     titleInput.addEventListener("input", () => saveMilestoneTitle(plan.id, milestone.id, titleInput.value));
     titleInput.addEventListener("keydown", (event) => {
@@ -597,18 +598,6 @@ function renderMilestones(plan) {
     item.querySelector(".milestone-delete").addEventListener("click", () => deleteMilestone(plan.id, milestone.id));
     els.milestoneList.appendChild(item);
   });
-}
-
-function getMilestonePosition(index, count) {
-  const safeCount = Math.max(1, count);
-  const angle = (-90 + (index * 360) / safeCount) * (Math.PI / 180);
-  const depth = Math.floor(index / 6);
-  const radiusX = Math.min(118, 74 + depth * 18 + Math.min(safeCount, 6) * 6);
-  const radiusY = Math.min(78, 56 + depth * 12 + Math.min(safeCount, 6) * 4);
-  return {
-    x: Math.cos(angle) * radiusX,
-    y: Math.sin(angle) * radiusY
-  };
 }
 
 function renderView() {
