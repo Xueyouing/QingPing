@@ -1207,19 +1207,67 @@ textarea:focus {
   display: block;
   padding: 0;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, var(--panel-card-alpha));
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(66, 166, 90, 0.12), transparent 34%),
+    rgba(255, 255, 255, var(--panel-card-alpha));
   overflow: hidden;
 }
 
 .plan-card-button {
   display: grid;
-  gap: 7px;
+  grid-template-columns: 70px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 11px;
+  min-height: 96px;
+  padding: 10px;
   background: transparent;
   color: inherit;
   text-align: left;
+}
+
+.plan-card-ripple {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.94) 0 26%, transparent 27%),
+    conic-gradient(var(--green) 0 var(--plan-progress), rgba(66, 166, 90, 0.13) var(--plan-progress) 100%);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.1);
+}
+
+.plan-card-ripple i {
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(66, 166, 90, 0.2);
+  border-radius: inherit;
+  animation: planRipple 3.6s ease-out infinite;
+}
+
+.plan-card-ripple i:nth-child(2) {
+  inset: 13px;
+  animation-delay: 0.7s;
+}
+
+.plan-card-ripple i:nth-child(3) {
+  inset: 20px;
+  animation-delay: 1.4s;
+}
+
+.plan-card-ripple b {
+  position: absolute;
+  inset: 26px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 6px rgba(66, 166, 90, 0.12);
+}
+
+.plan-item-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
 }
 
 .plan-item-head {
@@ -1280,7 +1328,8 @@ textarea:focus {
 
 .plan-detail {
   display: grid;
-  gap: 6px;
+  grid-template-rows: auto auto auto auto auto auto auto;
+  gap: 7px;
   height: 100%;
   overflow: hidden;
 }
@@ -1297,39 +1346,130 @@ textarea:focus {
   padding: 0 2px;
 }
 
-.plan-detail-grid {
+.plan-ripple-stage {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  gap: 8px;
+  min-height: 204px;
 }
 
-.plan-detail-grid label,
-.plan-wide-field {
-  display: grid;
-  gap: 5px;
+.plan-ripple-map {
+  position: relative;
+  min-height: 204px;
+  overflow: hidden;
+  border: 1px solid rgba(66, 166, 90, 0.13);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0 19%, transparent 20%),
+    radial-gradient(circle at 50% 52%, rgba(66, 166, 90, 0.12), transparent 58%),
+    linear-gradient(145deg, rgba(255, 255, 255, var(--panel-card-alpha)), rgba(240, 249, 244, 0.78));
 }
 
-.plan-detail-grid span,
+.plan-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 86px;
+  height: 86px;
+  border: 1px solid rgba(66, 166, 90, 0.18);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: planWave 4.8s ease-out infinite;
+}
+
+.plan-wave.wave-b {
+  animation-delay: 1.2s;
+}
+
+.plan-wave.wave-c {
+  animation-delay: 2.4s;
+}
+
+.plan-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 94px;
+  min-height: 82px;
+  padding: 10px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.12), 0 10px 24px rgba(66, 166, 90, 0.12);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.plan-core span,
+.plan-core small,
+.plan-side-panel span,
 .plan-wide-field span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.plan-core strong {
+  display: -webkit-box;
+  max-width: 74px;
+  overflow: hidden;
+  color: var(--green-dark);
+  font-size: 14px;
+  line-height: 1.25;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.plan-side-panel {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.plan-side-panel label,
+.plan-wide-field {
+  display: grid;
+  gap: 3px;
+}
+
+.plan-date-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.plan-side-panel select,
+.plan-side-panel input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+.plan-side-panel input[type="range"] {
+  height: 20px;
+  padding: 0;
 }
 
 .plan-progress-readout {
   position: relative;
+  height: 6px;
+  margin-top: 4px;
 }
 
 .plan-progress-readout span {
   position: absolute;
   right: 0;
-  top: -18px;
+  top: -15px;
   color: var(--green-dark);
   font-size: 12px;
   font-weight: 800;
 }
 
 .plan-wide-field textarea {
-  min-height: 42px;
+  min-height: 38px;
   resize: none;
   padding: 8px 9px;
   line-height: 1.45;
@@ -1342,42 +1482,119 @@ textarea:focus {
 }
 
 .milestone-list {
-  display: grid;
-  gap: 5px;
-  min-height: 0;
-  max-height: 78px;
   margin: 0;
   padding: 0;
-  overflow: hidden;
   list-style: none;
 }
 
-.milestone-item {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 32px;
-  border-bottom: 1px solid rgba(66, 166, 90, 0.1);
+.ripple-milestones {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
 }
 
-.milestone-item span {
+.milestone-item {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transform: translate(-50%, -50%) translate(var(--x), var(--y));
+  animation: milestoneFloat 3.8s ease-in-out infinite;
+  animation-delay: var(--node-delay);
+}
+
+.milestone-node {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 5px;
+  width: 92px;
+  min-height: 42px;
+  padding: 5px 7px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.12), 0 8px 18px rgba(66, 166, 90, 0.08);
+  text-align: left;
+}
+
+.milestone-node b {
+  grid-row: 1 / 3;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 10px;
+}
+
+.milestone-node span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 11px;
+  font-weight: 800;
 }
 
-.milestone-item.is-done span {
+.milestone-node small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.milestone-item.is-done .milestone-node {
+  background: color-mix(in srgb, var(--green) 14%, white);
+}
+
+.milestone-item.is-done .milestone-node span {
   color: var(--muted);
   text-decoration: line-through;
 }
 
-.milestone-check {
-  width: 26px;
-  height: 26px;
+.milestone-delete {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: var(--green-soft);
+  background: rgba(255, 255, 255, 0.82);
+  color: #a05b4c;
+  font-size: 13px;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 140ms ease-out, transform 140ms ease-out;
+}
+
+.milestone-item:hover .milestone-delete,
+.milestone-delete:focus-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.milestone-empty {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 72px);
+  display: grid;
+  gap: 2px;
+  width: 150px;
+  color: var(--muted);
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.milestone-empty strong {
   color: var(--green-dark);
+  font-size: 12px;
+}
+
+.milestone-empty span {
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .plan-updated {
@@ -1388,6 +1605,41 @@ textarea:focus {
 
 .text-button.danger {
   color: #a05b4c;
+}
+
+@keyframes planRipple {
+  0% {
+    opacity: 0.72;
+    transform: scale(0.76);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+@keyframes planWave {
+  0% {
+    opacity: 0.55;
+    transform: translate(-50%, -50%) scale(0.75);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.72);
+  }
+}
+
+@keyframes milestoneFloat {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translate(var(--x), var(--y));
+  }
+
+  50% {
+    transform: translate(-50%, -50%) translate(var(--x), calc(var(--y) - 3px));
+  }
 }
 
 .history-day button {

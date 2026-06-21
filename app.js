@@ -82,6 +82,8 @@ const els = {
   planDetailStatus: $("#planDetailStatus"),
   planProgress: $("#planProgress"),
   planProgressText: $("#planProgressText"),
+  planCoreTitle: $("#planCoreTitle"),
+  planCoreMeta: $("#planCoreMeta"),
   planStartDate: $("#planStartDate"),
   planDueDate: $("#planDueDate"),
   planOverallGoal: $("#planOverallGoal"),
@@ -528,14 +530,15 @@ function renderPlans() {
 function renderPlanList() {
   els.planList.innerHTML = "";
   if (!state.stagePlans.length) {
-    els.planList.innerHTML = `<li class="empty-state compact"><strong>列出主要任务</strong><span>先建立任务名，再进入详情拆目标、进度和时间。</span></li>`;
+    els.planList.innerHTML = `<li class="empty-state compact"><strong>点开一圈计划涟漪</strong><span>先写主要任务，再把阶段目标一层层放进水纹里。</span></li>`;
     return;
   }
   state.stagePlans.forEach((plan) => {
     const doneCount = plan.milestones.filter((item) => item.done).length;
     const item = document.createElement("li");
     item.className = `plan-item is-${plan.status}`;
-    item.innerHTML = `<button class="plan-card-button" type="button"><div class="plan-item-head"><strong></strong><span></span></div><p class="plan-goal"></p><div class="plan-progress-mini"><i></i></div><small></small></button>`;
+    item.innerHTML = `<button class="plan-card-button" type="button"><div class="plan-card-ripple" aria-hidden="true"><i></i><i></i><i></i><b></b></div><div class="plan-item-copy"><div class="plan-item-head"><strong></strong><span></span></div><p class="plan-goal"></p><div class="plan-progress-mini"><i></i></div><small></small></div></button>`;
+    item.style.setProperty("--plan-progress", `${clamp(plan.progress, 0, 100)}%`);
     item.querySelector("strong").textContent = plan.title;
     item.querySelector(".plan-item-head span").textContent = PLAN_STATUS[plan.status] || "推进中";
     item.querySelector(".plan-goal").textContent = plan.overallGoal || plan.route || "进入详情设置阶段目标、进度和时间。";
@@ -548,6 +551,7 @@ function renderPlanList() {
 
 function renderPlanDetail(plan) {
   if (!plan) return;
+  const doneCount = plan.milestones.filter((item) => item.done).length;
   if (document.activeElement !== els.planDetailTitle) els.planDetailTitle.value = plan.title;
   if (document.activeElement !== els.planDetailStatus) els.planDetailStatus.value = plan.status;
   if (document.activeElement !== els.planProgress) els.planProgress.value = String(plan.progress);
@@ -558,6 +562,8 @@ function renderPlanDetail(plan) {
   if (document.activeElement !== els.planNotes) els.planNotes.value = plan.notes;
   els.planProgressText.textContent = `${plan.progress}%`;
   els.planProgressText.nextElementSibling.style.width = `${clamp(plan.progress, 0, 100)}%`;
+  els.planCoreTitle.textContent = plan.title || "未命名";
+  els.planCoreMeta.textContent = `${plan.progress}% · ${doneCount}/${plan.milestones.length} 阶段`;
   els.planUpdatedAt.textContent = plan.updatedAt ? `更新于 ${formatDateTime(plan.updatedAt)}` : "尚未更新";
   renderMilestones(plan);
 }
@@ -565,19 +571,38 @@ function renderPlanDetail(plan) {
 function renderMilestones(plan) {
   els.milestoneList.innerHTML = "";
   if (!plan.milestones.length) {
-    els.milestoneList.innerHTML = `<li class="empty-state mini"><strong>还没有阶段目标</strong><span>添加几个可完成的小台阶。</span></li>`;
+    els.milestoneList.innerHTML = `<li class="milestone-empty"><strong>还没有阶段目标</strong><span>先加一个小台阶，涟漪就会展开。</span></li>`;
     return;
   }
-  plan.milestones.forEach((milestone) => {
+  const count = plan.milestones.length;
+  plan.milestones.forEach((milestone, index) => {
+    const position = getMilestonePosition(index, count);
     const item = document.createElement("li");
     item.className = "milestone-item";
     item.classList.toggle("is-done", milestone.done);
-    item.innerHTML = `<button class="milestone-check" type="button">✓</button><span></span><button class="text-button danger" type="button">删除</button>`;
+    item.style.setProperty("--x", `${position.x}px`);
+    item.style.setProperty("--y", `${position.y}px`);
+    item.style.setProperty("--node-delay", `${index * 120}ms`);
+    item.innerHTML = `<button class="milestone-node" type="button"><b></b><span></span><small></small></button><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
+    item.querySelector("b").textContent = String(index + 1);
     item.querySelector("span").textContent = milestone.title;
-    item.querySelector(".milestone-check").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
-    item.querySelector(".danger").addEventListener("click", () => deleteMilestone(plan.id, milestone.id));
+    item.querySelector("small").textContent = milestone.done ? "完成" : "推进";
+    item.querySelector(".milestone-node").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
+    item.querySelector(".milestone-delete").addEventListener("click", () => deleteMilestone(plan.id, milestone.id));
     els.milestoneList.appendChild(item);
   });
+}
+
+function getMilestonePosition(index, count) {
+  const safeCount = Math.max(1, count);
+  const angle = (-90 + (index * 360) / safeCount) * (Math.PI / 180);
+  const depth = Math.floor(index / 6);
+  const radiusX = Math.min(118, 74 + depth * 18 + Math.min(safeCount, 6) * 6);
+  const radiusY = Math.min(78, 56 + depth * 12 + Math.min(safeCount, 6) * 4);
+  return {
+    x: Math.cos(angle) * radiusX,
+    y: Math.sin(angle) * radiusY
+  };
 }
 
 function renderView() {
@@ -671,7 +696,18 @@ function switchView(view) {
 }
 
 function openPanelFromHash() {
-  const view = normalizeViewName(location.hash.replace("#", "") || new URLSearchParams(location.search).get("view"));
+  const raw = location.hash.replace("#", "") || new URLSearchParams(location.search).get("view");
+  if (raw?.startsWith("plan:")) {
+    const planId = raw.slice(5);
+    state.settings.activeView = "plan";
+    activePlanId = planId;
+    planScreen = state.stagePlans.some((plan) => plan.id === planId) ? "detail" : "list";
+    setAppWindowMode("panel");
+    renderView();
+    renderPlans();
+    return;
+  }
+  const view = normalizeViewName(raw);
   if (["today", "focus", "knowledge", "plan"].includes(view)) {
     state.settings.activeView = view;
     setAppWindowMode("panel");
@@ -1039,6 +1075,7 @@ function addMilestone(event) {
   if (!plan || !title) return;
   plan.milestones.push({ id: makeId(), title, done: false, createdAt: new Date().toISOString() });
   els.milestoneInput.value = "";
+  if (plan.status === "done") plan.status = "active";
   plan.updatedAt = new Date().toISOString();
   saveState();
   renderPlans();
@@ -1050,8 +1087,7 @@ function toggleMilestone(planId, milestoneId) {
   const milestone = plan.milestones.find((item) => item.id === milestoneId);
   if (!milestone) return;
   milestone.done = !milestone.done;
-  const doneCount = plan.milestones.filter((item) => item.done).length;
-  if (plan.milestones.length) plan.progress = Math.round((doneCount / plan.milestones.length) * 100);
+  syncPlanProgressFromMilestones(plan);
   plan.updatedAt = new Date().toISOString();
   saveState();
   renderPlans();
@@ -1061,9 +1097,22 @@ function deleteMilestone(planId, milestoneId) {
   const plan = state.stagePlans.find((item) => item.id === planId);
   if (!plan) return;
   plan.milestones = plan.milestones.filter((item) => item.id !== milestoneId);
+  syncPlanProgressFromMilestones(plan);
   plan.updatedAt = new Date().toISOString();
   saveState();
   renderPlans();
+}
+
+function syncPlanProgressFromMilestones(plan) {
+  if (!plan.milestones.length) {
+    plan.progress = 0;
+    if (plan.status === "done") plan.status = "active";
+    return;
+  }
+  const doneCount = plan.milestones.filter((item) => item.done).length;
+  plan.progress = Math.round((doneCount / plan.milestones.length) * 100);
+  if (doneCount === plan.milestones.length) plan.status = "done";
+  else if (plan.status === "done") plan.status = "active";
 }
 
 function deleteActivePlan() {
