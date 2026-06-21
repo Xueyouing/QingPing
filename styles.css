@@ -867,15 +867,13 @@ textarea:focus {
   grid-template-columns: 126px minmax(0, 1fr);
 }
 
-.review-chart-shell.is-ripple,
-.review-chart-shell.is-bars {
+.review-chart-shell.is-ripple {
   grid-template-columns: 1fr;
   align-items: stretch;
   min-height: 148px;
 }
 
-.review-chart-shell.is-ripple .review-metrics,
-.review-chart-shell.is-bars .review-metrics {
+.review-chart-shell.is-ripple .review-metrics {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -910,8 +908,7 @@ textarea:focus {
   font-size: 11px;
 }
 
-.review-ripple,
-.review-bars {
+.review-ripple {
   display: grid;
   gap: 6px;
   align-self: stretch;
@@ -919,7 +916,6 @@ textarea:focus {
 }
 
 .review-ripple[hidden],
-.review-bars[hidden],
 .review-ring[hidden] {
   display: none;
 }
@@ -936,8 +932,7 @@ textarea:focus {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ripple-color) 18%, transparent);
 }
 
-.ripple-line strong,
-.review-bar-row span {
+.ripple-line strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -945,35 +940,11 @@ textarea:focus {
   font-size: 12px;
 }
 
-.ripple-line span,
-.review-bar-row em {
+.ripple-line span {
   padding-right: 8px;
   color: var(--muted);
   font-size: 11px;
   font-style: normal;
-}
-
-.review-bar-row {
-  display: grid;
-  grid-template-columns: minmax(0, 72px) minmax(0, 1fr) 36px;
-  align-items: center;
-  gap: 7px;
-  min-height: 22px;
-}
-
-.review-bar-row b {
-  display: block;
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: rgba(66, 166, 90, 0.1);
-}
-
-.review-bar-row i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--bar-color);
 }
 
 .review-metrics {
@@ -1342,25 +1313,26 @@ textarea:focus {
 
 .plan-ripple-map {
   position: relative;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 10px;
   height: 100%;
   min-height: 406px;
+  padding: 10px;
   overflow: hidden;
   border: 1px solid rgba(66, 166, 90, 0.13);
   border-radius: 18px;
   background:
-    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.92) 0 17%, transparent 18%),
-    radial-gradient(circle at 52% 50%, rgba(66, 166, 90, 0.13), transparent 57%),
-    radial-gradient(circle at 14% 12%, rgba(142, 122, 216, 0.13), transparent 32%),
+    radial-gradient(circle at 50% 22%, rgba(255, 255, 255, 0.92) 0 13%, transparent 14%),
+    radial-gradient(circle at 52% 50%, rgba(66, 166, 90, 0.1), transparent 58%),
+    radial-gradient(circle at 14% 12%, rgba(142, 122, 216, 0.11), transparent 32%),
     linear-gradient(145deg, rgba(255, 255, 255, var(--panel-card-alpha)), rgba(238, 249, 243, 0.8));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 .plan-map-toolbar {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 10px;
-  z-index: 6;
+  position: relative;
+  z-index: 5;
   display: grid;
   grid-template-columns: minmax(84px, 1fr) auto auto;
   gap: 6px;
@@ -1406,48 +1378,20 @@ textarea:focus {
   font-size: 11px;
 }
 
-.plan-wave {
-  position: absolute;
-  left: 50%;
-  width: 82%;
-  height: 84px;
-  border: 1px solid rgba(66, 166, 90, 0.15);
-  border-radius: 50%;
-  transform: translateX(-50%);
-  animation: planWave 4.8s ease-out infinite;
-}
-
-.plan-wave.wave-a {
-  top: 102px;
-}
-
-.plan-wave.wave-b {
-  top: 210px;
-  animation-delay: 1.2s;
-}
-
-.plan-wave.wave-c {
-  top: 318px;
-  animation-delay: 2.4s;
-}
-
 .plan-core {
-  position: absolute;
-  left: 50%;
-  top: 66px;
-  z-index: 4;
+  position: relative;
+  z-index: 5;
   display: grid;
   place-items: center;
-  width: 190px;
-  min-height: 78px;
-  padding: 9px 12px;
-  border-radius: 30px;
+  width: 100%;
+  min-height: 86px;
+  padding: 10px 14px;
+  border-radius: 24px;
   background:
     radial-gradient(circle at 36% 16%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.82)),
     rgba(255, 255, 255, 0.86);
-  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.14), 0 16px 34px rgba(66, 166, 90, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.14), 0 14px 30px rgba(66, 166, 90, 0.12);
   text-align: center;
-  transform: translateX(-50%);
 }
 
 .plan-core span,
@@ -1457,7 +1401,7 @@ textarea:focus {
 }
 
 .plan-core-title {
-  width: 162px;
+  width: min(100%, 260px);
   height: 32px;
   border: 0;
   border-radius: 16px;
@@ -1512,31 +1456,30 @@ textarea:focus {
 }
 
 .plan-add-node {
-  position: absolute;
-  left: 50%;
-  bottom: 9px;
-  z-index: 7;
-  width: min(318px, calc(100% - 28px));
-  padding: 4px;
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  padding: 6px 6px 6px 14px;
   border: 1px solid rgba(66, 166, 90, 0.13);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.78);
-  box-shadow: 0 10px 24px rgba(66, 166, 90, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  transform: translateX(-50%);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 88% 50%, rgba(66, 166, 90, 0.1), transparent 28%),
+    rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 22px rgba(66, 166, 90, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .plan-add-node input {
-  height: 28px;
+  height: 34px;
   border: 0;
   background: transparent;
   font-size: 13px;
 }
 
 .plan-add-node button {
-  width: 28px;
-  height: 28px;
-  min-height: 28px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 48% 52% 58% 42% / 52% 46% 54% 48%;
   padding: 0;
   font-size: 18px;
   line-height: 1;
@@ -1549,138 +1492,132 @@ textarea:focus {
 }
 
 .ripple-milestones {
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  top: 178px;
-  bottom: 64px;
-  z-index: 3;
+  position: relative;
+  z-index: 4;
   display: grid;
-  grid-auto-rows: minmax(32px, 1fr);
-  gap: 5px;
-  align-content: stretch;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 8px 14px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(66, 166, 90, 0.22) transparent;
 }
 
-.ripple-milestones.is-compact {
-  top: 152px;
-  bottom: 56px;
-  grid-auto-rows: minmax(20px, 1fr);
-  gap: 2px;
+.ripple-milestones::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ripple-milestones::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(66, 166, 90, 0.18);
 }
 
 .ripple-milestones::before {
   content: "";
   position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
+  left: 37px;
+  top: 20px;
+  bottom: 22px;
   width: 2px;
   border-radius: 999px;
-  background: linear-gradient(180deg, rgba(66, 166, 90, 0.08), rgba(66, 166, 90, 0.24), rgba(66, 166, 90, 0.06));
-  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(66, 166, 90, 0.04), rgba(66, 166, 90, 0.26), rgba(66, 166, 90, 0.04));
 }
 
 .milestone-item {
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) 28px;
   align-items: center;
-  gap: 3px;
-  width: min(286px, 80%);
-  animation: milestoneFloat 3.8s ease-in-out infinite;
-  animation-delay: var(--node-delay);
+  gap: 9px;
+  min-height: 76px;
+  width: 100%;
 }
 
 .milestone-item::before {
   content: "";
   position: absolute;
-  left: -54px;
-  right: -54px;
-  top: 50%;
+  left: 6px;
+  top: 9px;
   z-index: -1;
-  height: 32px;
-  border-top: 1px solid rgba(66, 166, 90, 0.13);
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(66, 166, 90, 0.12);
   border-radius: 50%;
-  transform: translateY(-50%);
-}
-
-.milestone-item.is-left {
-  justify-self: start;
-}
-
-.milestone-item.is-right {
-  justify-self: end;
+  background: radial-gradient(circle, rgba(66, 166, 90, 0.08), transparent 68%);
+  opacity: 0.72;
 }
 
 .milestone-node {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  grid-template-rows: auto auto;
-  align-items: center;
-  column-gap: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   width: 100%;
-  min-height: 46px;
-  padding: 6px 8px;
-  border-radius: 15px;
+  min-height: 60px;
+  padding: 9px 12px;
+  border-radius: 18px 22px 22px 18px;
   background:
     radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.82)),
     rgba(255, 255, 255, 0.86);
   color: var(--text);
-  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.12), 0 8px 18px rgba(66, 166, 90, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.12), 0 8px 20px rgba(66, 166, 90, 0.07);
   text-align: left;
 }
 
-.ripple-milestones.is-compact .milestone-node {
-  grid-template-rows: 1fr;
-  min-height: 22px;
-  padding: 2px 6px;
-}
-
-.ripple-milestones.is-compact .milestone-title-input {
-  height: 18px;
-}
-
-.ripple-milestones.is-compact .milestone-node small {
-  display: none;
-}
-
-.ripple-milestones.is-compact .milestone-toggle {
-  width: 16px;
-  height: 16px;
-  font-size: 10px;
-}
-
-.ripple-milestones.is-compact .milestone-item::before {
-  height: 20px;
-}
-
 .milestone-item.is-current .milestone-node {
-  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.26), 0 10px 22px rgba(66, 166, 90, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.28), 0 12px 26px rgba(66, 166, 90, 0.14);
 }
 
 .milestone-toggle {
-  grid-row: 1 / 3;
+  position: relative;
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--green-soft);
+  width: 52px;
+  height: 52px;
+  border-radius: 50% 50% 54% 46% / 48% 48% 58% 52%;
+  background:
+    radial-gradient(circle at 35% 26%, rgba(255, 255, 255, 0.96), transparent 25%),
+    radial-gradient(circle at 62% 68%, rgba(58, 154, 178, 0.16), transparent 38%),
+    linear-gradient(145deg, color-mix(in srgb, var(--green) 22%, white), rgba(255, 255, 255, 0.82));
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.18), 0 10px 20px rgba(66, 166, 90, 0.14);
   color: var(--green-dark);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
+  transform: rotate(-5deg);
+}
+
+.milestone-toggle span {
+  transform: rotate(5deg);
+}
+
+.milestone-toggle::before,
+.milestone-toggle::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px solid rgba(66, 166, 90, 0.12);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.milestone-toggle::after {
+  inset: -13px;
+  opacity: 0.45;
 }
 
 .milestone-title-input {
   min-width: 0;
-  height: 20px;
+  width: 100%;
+  height: 25px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 2px;
+  padding: 0 4px;
   color: var(--text);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -1691,11 +1628,21 @@ textarea:focus {
 
 .milestone-node small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .milestone-item.is-done .milestone-node {
   background: color-mix(in srgb, var(--green) 14%, white);
+}
+
+.milestone-item.is-done .milestone-toggle {
+  background:
+    radial-gradient(circle at 35% 26%, rgba(255, 255, 255, 0.96), transparent 25%),
+    linear-gradient(145deg, color-mix(in srgb, var(--green) 40%, white), color-mix(in srgb, var(--green) 22%, white));
+}
+
+.milestone-item.is-current .milestone-toggle {
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.28), 0 12px 28px rgba(66, 166, 90, 0.22);
 }
 
 .milestone-item.is-done .milestone-title-input {
@@ -1706,33 +1653,37 @@ textarea:focus {
 .milestone-delete {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.82);
   color: #a05b4c;
-  font-size: 13px;
-  opacity: 0;
-  transform: translateX(-4px);
+  font-size: 14px;
+  opacity: 0.54;
+  transform: translateX(0);
   transition: opacity 140ms ease-out, transform 140ms ease-out;
 }
 
 .milestone-item:hover .milestone-delete,
 .milestone-delete:focus-visible {
   opacity: 1;
-  transform: translateX(0);
+  transform: scale(1.04);
 }
 
 .milestone-empty {
-  position: absolute;
-  left: 50%;
-  top: 190px;
+  position: relative;
   display: grid;
-  gap: 2px;
-  width: 150px;
+  place-items: center;
+  gap: 6px;
+  min-height: 168px;
+  padding: 22px;
+  border: 1px dashed rgba(66, 166, 90, 0.18);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(66, 166, 90, 0.11), transparent 36%),
+    rgba(255, 255, 255, 0.48);
   color: var(--muted);
   text-align: center;
-  transform: translateX(-50%);
 }
 
 .milestone-empty strong {
@@ -1764,29 +1715,6 @@ textarea:focus {
   100% {
     opacity: 0;
     transform: scale(1.28);
-  }
-}
-
-@keyframes planWave {
-  0% {
-    opacity: 0.55;
-    transform: translateX(-50%) scaleX(0.72) scaleY(0.72);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateX(-50%) scaleX(1.2) scaleY(1.18);
-  }
-}
-
-@keyframes milestoneFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-2px);
   }
 }
 

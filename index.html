@@ -103,7 +103,6 @@
                 <div class="review-chart-tabs" aria-label="时间分布方案">
                   <button class="is-active" data-review-chart="ring" type="button">青萍环</button>
                   <button data-review-chart="ripple" type="button">涟漪</button>
-                  <button data-review-chart="bars" type="button">排行</button>
                 </div>
               </div>
               <div class="review-chart-shell" id="reviewChartShell">
@@ -114,7 +113,6 @@
                   </div>
                 </div>
                 <div class="review-ripple" id="reviewRipple" hidden></div>
-                <div class="review-bars" id="reviewBars" hidden></div>
                 <div class="review-metrics">
                   <span><b id="reviewTopTask">暂无</b><small>主线任务</small></span>
                   <span><b id="reviewSessionCount">0</b><small>专注段</small></span>
@@ -164,9 +162,6 @@
             </div>
             <section class="plan-ripple-stage" aria-label="主要任务与阶段目标">
               <div class="plan-ripple-map">
-                <span class="plan-wave wave-a" aria-hidden="true"></span>
-                <span class="plan-wave wave-b" aria-hidden="true"></span>
-                <span class="plan-wave wave-c" aria-hidden="true"></span>
                 <div class="plan-map-toolbar">
                   <select id="planDetailStatus" aria-label="计划状态"><option value="active">推进中</option><option value="next">下一步</option><option value="blocked">受阻</option><option value="done">完成</option></select>
                   <label><span>始</span><input id="planStartDate" type="date" aria-label="开始日期"></label>

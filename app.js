@@ -24,7 +24,7 @@ const BACKGROUNDS = {
 };
 const MOOD_LABELS = ["低落", "有点累", "平稳", "清亮", "很好"];
 const MOOD_MAP = { sad: 1, angry: 2, tired: 2, calm: 3, surprised: 4, happy: 5, done: 5, cheer: 5 };
-const REVIEW_CHART_MODES = ["ring", "ripple", "bars"];
+const REVIEW_CHART_MODES = ["ring", "ripple"];
 const REVIEW_COLORS = ["#42a65a", "#8e7ad8", "#3a9ab2", "#ffb74d", "#5ebd88", "#b99af2"];
 const PLAN_STATUS = {
   active: "推进中",
@@ -95,7 +95,6 @@ const els = {
   reviewRing: $("#reviewRing"),
   reviewRingTotal: $("#reviewRingTotal"),
   reviewRipple: $("#reviewRipple"),
-  reviewBars: $("#reviewBars"),
   reviewTopTask: $("#reviewTopTask"),
   reviewSessionCount: $("#reviewSessionCount"),
   reviewBalance: $("#reviewBalance"),
@@ -400,7 +399,7 @@ function renderReflection() {
 }
 
 function renderReviewSummary() {
-  const mode = REVIEW_CHART_MODES.includes(state.settings.reviewChartMode) ? state.settings.reviewChartMode : "ring";
+  const mode = state.settings.reviewChartMode === "bars" ? "ripple" : (REVIEW_CHART_MODES.includes(state.settings.reviewChartMode) ? state.settings.reviewChartMode : "ring");
   const items = getTodayReviewDistribution();
   const total = items.reduce((sum, item) => sum + item.seconds, 0);
   const top = items[0];
@@ -409,7 +408,7 @@ function renderReviewSummary() {
   const balance = getReviewBalance(items, topShare);
 
   els.reviewChartButtons.forEach((button) => button.classList.toggle("is-active", button.dataset.reviewChart === mode));
-  els.reviewChartShell.classList.remove("is-ring", "is-ripple", "is-bars");
+  els.reviewChartShell.classList.remove("is-ring", "is-ripple");
   els.reviewChartShell.classList.add(`is-${mode}`);
   els.reviewTotal.textContent = formatFocus(total);
   els.reviewRingTotal.textContent = formatFocus(total);
@@ -420,10 +419,8 @@ function renderReviewSummary() {
 
   els.reviewRing.hidden = mode !== "ring";
   els.reviewRipple.hidden = mode !== "ripple";
-  els.reviewBars.hidden = mode !== "bars";
   renderReviewRing(items, total);
   renderReviewRipple(items, total);
-  renderReviewBars(items, total);
   renderReviewLegend(items, total);
 }
 
@@ -462,27 +459,6 @@ function renderReviewRipple(items, total) {
     time.textContent = formatFocus(item.seconds);
     line.append(title, time);
     els.reviewRipple.appendChild(line);
-  });
-}
-
-function renderReviewBars(items, total) {
-  els.reviewBars.innerHTML = "";
-  if (!items.length || !total) {
-    const empty = document.createElement("span");
-    empty.className = "review-empty-line";
-    empty.textContent = "完成一段任务后生成排行";
-    els.reviewBars.appendChild(empty);
-    return;
-  }
-  items.slice(0, 5).forEach((item, index) => {
-    const row = document.createElement("div");
-    row.className = "review-bar-row";
-    row.style.setProperty("--bar-color", REVIEW_COLORS[index % REVIEW_COLORS.length]);
-    row.innerHTML = "<span></span><b><i></i></b><em></em>";
-    row.querySelector("span").textContent = item.title;
-    row.querySelector("i").style.width = `${Math.max(4, (item.seconds / total) * 100)}%`;
-    row.querySelector("em").textContent = formatFocus(item.seconds);
-    els.reviewBars.appendChild(row);
   });
 }
 
@@ -566,9 +542,8 @@ function renderPlanDetail(plan) {
 
 function renderMilestones(plan) {
   els.milestoneList.innerHTML = "";
-  els.milestoneList.classList.toggle("is-compact", plan.milestones.length > 6);
   if (!plan.milestones.length) {
-    els.milestoneList.innerHTML = `<li class="milestone-empty"><strong>还没有阶段目标</strong><span>先加一个小台阶，涟漪就会展开。</span></li>`;
+    els.milestoneList.innerHTML = `<li class="milestone-empty"><strong>还没有阶段目标</strong><span>第一滴水落下时，路线才开始有形。</span></li>`;
     return;
   }
   const count = plan.milestones.length;
@@ -576,15 +551,16 @@ function renderMilestones(plan) {
   plan.milestones.forEach((milestone, index) => {
     const item = document.createElement("li");
     item.className = "milestone-item";
-    item.classList.add(index % 2 ? "is-right" : "is-left");
+    item.dataset.milestoneId = milestone.id;
     item.classList.toggle("is-done", milestone.done);
     item.classList.toggle("is-current", index === firstPending);
+    item.classList.toggle("is-pending", !milestone.done && index !== firstPending);
     item.style.setProperty("--node-delay", `${index * 120}ms`);
-    item.innerHTML = `<div class="milestone-node"><button class="milestone-toggle" type="button" title="完成/取消阶段目标"></button><input class="milestone-title-input" type="text" autocomplete="off"><small></small></div><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
-    item.querySelector(".milestone-toggle").textContent = milestone.done ? "✓" : String(index + 1);
+    item.innerHTML = `<button class="milestone-toggle" type="button" title="完成/取消阶段目标"><span></span></button><div class="milestone-node"><input class="milestone-title-input" type="text" autocomplete="off"><small></small></div><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
+    item.querySelector(".milestone-toggle span").textContent = milestone.done ? "✓" : String(index + 1).padStart(2, "0");
     const titleInput = item.querySelector(".milestone-title-input");
     titleInput.value = milestone.title;
-    item.querySelector("small").textContent = milestone.done ? "完成" : (index === firstPending ? "当前" : "推进");
+    item.querySelector("small").textContent = `${index + 1}/${count} · ${milestone.done ? "完成" : (index === firstPending ? "当前推进" : "待推进")}`;
     item.querySelector(".milestone-toggle").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
     titleInput.addEventListener("input", () => saveMilestoneTitle(plan.id, milestone.id, titleInput.value));
     titleInput.addEventListener("keydown", (event) => {
@@ -1064,12 +1040,18 @@ function addMilestone(event) {
   const plan = getActivePlan();
   const title = els.milestoneInput.value.trim();
   if (!plan || !title) return;
-  plan.milestones.push({ id: makeId(), title, done: false, createdAt: new Date().toISOString() });
+  const milestone = { id: makeId(), title, done: false, createdAt: new Date().toISOString() };
+  plan.milestones.push(milestone);
   els.milestoneInput.value = "";
   if (plan.status === "done") plan.status = "active";
+  syncPlanProgressFromMilestones(plan);
   plan.updatedAt = new Date().toISOString();
   saveState();
   renderPlans();
+  window.requestAnimationFrame(() => {
+    const node = els.milestoneList.querySelector(`[data-milestone-id="${milestone.id}"]`);
+    node?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
 }
 
 function toggleMilestone(planId, milestoneId) {
@@ -1522,13 +1504,14 @@ function migrateSettings(settings = {}) {
   const wantsImage = settings.backgroundMode === "image" || settings.backgroundPreset === "image";
   const savedPreset = BACKGROUNDS[settings.backgroundPreset] ? settings.backgroundPreset : "dew";
   const activeView = normalizeViewName(settings.activeView || "today");
+  const reviewChartMode = settings.reviewChartMode === "bars" ? "ripple" : (REVIEW_CHART_MODES.includes(settings.reviewChartMode) ? settings.reviewChartMode : "ring");
   return {
     ...settings,
     activeView: ["today", "focus", "knowledge", "plan"].includes(activeView) ? activeView : "today",
     theme: THEMES[theme] ? theme : "green",
     tags: Array.from(new Set([...(Array.isArray(settings.tags) ? settings.tags : []), ...DEFAULT_TAGS].filter(Boolean))),
     showBubbleTimer: settings.showBubbleTimer !== false,
-    reviewChartMode: REVIEW_CHART_MODES.includes(settings.reviewChartMode) ? settings.reviewChartMode : "ring",
+    reviewChartMode,
     bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 45, 95),
     panelOpacity: clamp(Number(settings.panelOpacity || 92), 68, 98),
     backgroundMode: wantsImage && hasImage ? "image" : "preset",
