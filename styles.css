@@ -114,6 +114,12 @@ button:disabled {
   transition: opacity 180ms ease-out, transform 180ms ease-out;
 }
 
+.panel {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 0;
+}
+
 .panel-bg,
 .settings::before {
   position: absolute;
@@ -151,7 +157,7 @@ button:disabled {
 }
 
 .is-panel .panel {
-  display: block;
+  display: grid;
 }
 
 .panel:not(.is-open) {
@@ -323,19 +329,21 @@ svg {
 
 .view {
   display: none;
-  height: calc(100% - 118px);
+  height: 100%;
+  min-height: 0;
   padding-top: 14px;
   overflow: hidden;
 }
 
 .view.is-active {
   display: block;
+  min-height: 0;
   animation: fadeIn 160ms ease-out both;
 }
 
 #todayView.is-active {
   display: grid;
-  grid-template-rows: auto auto auto minmax(118px, 1fr) auto minmax(82px, 0.82fr);
+  grid-template-rows: auto auto auto minmax(152px, 1fr) auto minmax(112px, 0.74fr);
   row-gap: 0;
   min-height: 0;
 }
@@ -429,6 +437,10 @@ textarea:focus {
   margin-top: 14px;
 }
 
+#todayView .section-title {
+  margin-top: 10px;
+}
+
 .section-title span {
   color: #486351;
   font-size: 14px;
@@ -470,7 +482,20 @@ textarea:focus {
 }
 
 .plan-list {
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(66, 166, 90, 0.22) transparent;
+}
+
+.plan-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.plan-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(66, 166, 90, 0.18);
 }
 
 .completed-title {
@@ -1391,7 +1416,13 @@ textarea:focus {
 .plan-screen,
 .plan-create,
 .plan-detail {
+  height: 100%;
   min-height: 0;
+}
+
+.plan-screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .plan-titlebar {

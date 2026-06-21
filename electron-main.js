@@ -11,8 +11,8 @@ let resizeState = null;
 let modeSwitchToken = 0;
 
 const BUBBLE_SIZE = 86;
-const PANEL_SIZE = { width: 460, height: 640 };
-const PANEL_MIN_SIZE = { width: 420, height: 560 };
+const PANEL_SIZE = { width: 520, height: 720 };
+const PANEL_MIN_SIZE = { width: 500, height: 660 };
 const VISIBLE_MARGIN = 28;
 
 function getStatePath() {
