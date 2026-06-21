@@ -80,15 +80,10 @@ const els = {
   planDetail: $("#planDetail"),
   planDetailTitle: $("#planDetailTitle"),
   planDetailStatus: $("#planDetailStatus"),
-  planProgress: $("#planProgress"),
   planProgressText: $("#planProgressText"),
-  planCoreTitle: $("#planCoreTitle"),
   planCoreMeta: $("#planCoreMeta"),
   planStartDate: $("#planStartDate"),
   planDueDate: $("#planDueDate"),
-  planOverallGoal: $("#planOverallGoal"),
-  planRoute: $("#planRoute"),
-  planNotes: $("#planNotes"),
   planUpdatedAt: $("#planUpdatedAt"),
   planList: $("#planList"),
   milestoneForm: $("#milestoneForm"),
@@ -185,9 +180,15 @@ function bindEvents() {
   els.deletePlan.addEventListener("click", deleteActivePlan);
   els.planCreateForm.addEventListener("submit", addStagePlan);
   els.milestoneForm.addEventListener("submit", addMilestone);
-  [els.planDetailTitle, els.planDetailStatus, els.planProgress, els.planStartDate, els.planDueDate, els.planOverallGoal, els.planRoute, els.planNotes].forEach((input) => {
+  [els.planDetailTitle, els.planDetailStatus, els.planStartDate, els.planDueDate].forEach((input) => {
     input.addEventListener("input", saveActivePlanDetails);
     input.addEventListener("change", saveActivePlanDetails);
+  });
+  els.planDetailTitle.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      els.planDetailTitle.blur();
+    }
   });
   els.collapseButton.addEventListener("click", () => setAppWindowMode("bubble"));
   els.settingsButton.addEventListener("click", () => {
@@ -554,15 +555,10 @@ function renderPlanDetail(plan) {
   const doneCount = plan.milestones.filter((item) => item.done).length;
   if (document.activeElement !== els.planDetailTitle) els.planDetailTitle.value = plan.title;
   if (document.activeElement !== els.planDetailStatus) els.planDetailStatus.value = plan.status;
-  if (document.activeElement !== els.planProgress) els.planProgress.value = String(plan.progress);
   if (document.activeElement !== els.planStartDate) els.planStartDate.value = plan.startDate;
   if (document.activeElement !== els.planDueDate) els.planDueDate.value = plan.dueDate;
-  if (document.activeElement !== els.planOverallGoal) els.planOverallGoal.value = plan.overallGoal;
-  if (document.activeElement !== els.planRoute) els.planRoute.value = plan.route;
-  if (document.activeElement !== els.planNotes) els.planNotes.value = plan.notes;
   els.planProgressText.textContent = `${plan.progress}%`;
   els.planProgressText.nextElementSibling.style.width = `${clamp(plan.progress, 0, 100)}%`;
-  els.planCoreTitle.textContent = plan.title || "未命名";
   els.planCoreMeta.textContent = `${plan.progress}% · ${doneCount}/${plan.milestones.length} 阶段`;
   els.planUpdatedAt.textContent = plan.updatedAt ? `更新于 ${formatDateTime(plan.updatedAt)}` : "尚未更新";
   renderMilestones(plan);
@@ -583,11 +579,21 @@ function renderMilestones(plan) {
     item.style.setProperty("--x", `${position.x}px`);
     item.style.setProperty("--y", `${position.y}px`);
     item.style.setProperty("--node-delay", `${index * 120}ms`);
-    item.innerHTML = `<button class="milestone-node" type="button"><b></b><span></span><small></small></button><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
-    item.querySelector("b").textContent = String(index + 1);
-    item.querySelector("span").textContent = milestone.title;
+    item.innerHTML = `<div class="milestone-node"><button class="milestone-toggle" type="button" title="完成/取消阶段目标"></button><input class="milestone-title-input" type="text" autocomplete="off"><small></small></div><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
+    item.querySelector(".milestone-toggle").textContent = milestone.done ? "✓" : String(index + 1);
+    const titleInput = item.querySelector(".milestone-title-input");
+    titleInput.value = milestone.title;
     item.querySelector("small").textContent = milestone.done ? "完成" : "推进";
-    item.querySelector(".milestone-node").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
+    item.querySelector(".milestone-toggle").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
+    titleInput.addEventListener("input", () => saveMilestoneTitle(plan.id, milestone.id, titleInput.value));
+    titleInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") titleInput.blur();
+      if (event.key === "Escape") {
+        titleInput.value = milestone.title;
+        titleInput.blur();
+      }
+    });
+    titleInput.addEventListener("blur", () => commitMilestoneTitle(plan.id, milestone.id, titleInput.value));
     item.querySelector(".milestone-delete").addEventListener("click", () => deleteMilestone(plan.id, milestone.id));
     els.milestoneList.appendChild(item);
   });
@@ -1057,12 +1063,8 @@ function saveActivePlanDetails() {
   if (!plan) return;
   plan.title = els.planDetailTitle.value.trim() || "未命名主要任务";
   plan.status = els.planDetailStatus.value;
-  plan.progress = clamp(Number(els.planProgress.value || 0), 0, 100);
   plan.startDate = els.planStartDate.value;
   plan.dueDate = els.planDueDate.value;
-  plan.overallGoal = els.planOverallGoal.value;
-  plan.route = els.planRoute.value;
-  plan.notes = els.planNotes.value;
   plan.updatedAt = new Date().toISOString();
   saveState();
   renderPlans();
@@ -1101,6 +1103,30 @@ function deleteMilestone(planId, milestoneId) {
   plan.updatedAt = new Date().toISOString();
   saveState();
   renderPlans();
+}
+
+function saveMilestoneTitle(planId, milestoneId, title) {
+  const milestone = findMilestone(planId, milestoneId);
+  if (!milestone) return;
+  milestone.title = title;
+  const plan = state.stagePlans.find((item) => item.id === planId);
+  if (plan) plan.updatedAt = new Date().toISOString();
+  saveState();
+}
+
+function commitMilestoneTitle(planId, milestoneId, title) {
+  const milestone = findMilestone(planId, milestoneId);
+  if (!milestone) return;
+  milestone.title = title.trim() || "未命名阶段";
+  const plan = state.stagePlans.find((item) => item.id === planId);
+  if (plan) plan.updatedAt = new Date().toISOString();
+  saveState();
+  renderPlans();
+}
+
+function findMilestone(planId, milestoneId) {
+  const plan = state.stagePlans.find((item) => item.id === planId);
+  return plan?.milestones.find((item) => item.id === milestoneId) || null;
 }
 
 function syncPlanProgressFromMilestones(plan) {

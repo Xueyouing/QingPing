@@ -162,36 +162,29 @@
               <button class="text-button" id="backPlanList" type="button">返回</button>
               <button class="text-button danger" id="deletePlan" type="button">删除</button>
             </div>
-            <input class="plan-detail-title" id="planDetailTitle" type="text" placeholder="主要任务名称" autocomplete="off">
             <section class="plan-ripple-stage" aria-label="主要任务与阶段目标">
               <div class="plan-ripple-map">
                 <span class="plan-wave wave-a" aria-hidden="true"></span>
                 <span class="plan-wave wave-b" aria-hidden="true"></span>
                 <span class="plan-wave wave-c" aria-hidden="true"></span>
+                <div class="plan-map-toolbar">
+                  <select id="planDetailStatus" aria-label="计划状态"><option value="active">推进中</option><option value="next">下一步</option><option value="blocked">受阻</option><option value="done">完成</option></select>
+                  <label><span>始</span><input id="planStartDate" type="date" aria-label="开始日期"></label>
+                  <label><span>止</span><input id="planDueDate" type="date" aria-label="截止日期"></label>
+                </div>
                 <div class="plan-core">
                   <span>主要任务</span>
-                  <strong id="planCoreTitle">未命名</strong>
+                  <textarea class="plan-core-title" id="planDetailTitle" placeholder="主要任务" rows="2"></textarea>
                   <small id="planCoreMeta">0% · 0阶段</small>
+                  <div class="plan-progress-readout"><span id="planProgressText">0%</span><b></b></div>
                 </div>
                 <ul class="milestone-list ripple-milestones" id="milestoneList"></ul>
-              </div>
-              <div class="plan-side-panel">
-                <label><span>状态</span><select id="planDetailStatus"><option value="active">推进中</option><option value="next">下一步</option><option value="blocked">受阻</option><option value="done">完成</option></select></label>
-                <label><span>进度</span><input id="planProgress" type="range" min="0" max="100" step="5"></label>
-                <div class="plan-progress-readout"><span id="planProgressText">0%</span><b></b></div>
-                <div class="plan-date-grid">
-                  <label><span>开始</span><input id="planStartDate" type="date"></label>
-                  <label><span>截止</span><input id="planDueDate" type="date"></label>
-                </div>
+                <form class="milestone-form plan-add-node" id="milestoneForm">
+                  <input id="milestoneInput" type="text" placeholder="新增阶段目标" autocomplete="off">
+                  <button class="secondary-button" type="submit">＋</button>
+                </form>
               </div>
             </section>
-            <label class="plan-wide-field"><span>总体目标</span><textarea id="planOverallGoal" placeholder="这个主要任务最终要达成什么。"></textarea></label>
-            <form class="milestone-form" id="milestoneForm">
-              <input id="milestoneInput" type="text" placeholder="新增阶段目标" autocomplete="off">
-              <button class="secondary-button" type="submit">添加</button>
-            </form>
-            <label class="plan-wide-field"><span>实现路线</span><textarea id="planRoute" placeholder="拆解路线、依赖、下一步动作和完成标准。"></textarea></label>
-            <label class="plan-wide-field"><span>备注</span><textarea id="planNotes" placeholder="风险、灵感、复盘、临时想法。"></textarea></label>
             <small class="plan-updated" id="planUpdatedAt">尚未更新</small>
           </article>
         </section>
