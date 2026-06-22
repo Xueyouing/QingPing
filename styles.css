@@ -545,10 +545,8 @@ textarea:focus {
 .history-item,
 .completed-item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "main tag"
-    "main actions";
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: "main tag actions";
   align-items: center;
   gap: 5px 8px;
   min-height: 58px;
@@ -597,7 +595,7 @@ textarea:focus {
 .tag-mini {
   grid-area: tag;
   justify-self: end;
-  width: 72px;
+  width: 76px;
   height: 30px;
   padding: 0 7px;
   font-size: 12px;
@@ -608,6 +606,7 @@ textarea:focus {
   justify-self: end;
   display: flex;
   gap: 4px;
+  align-items: center;
 }
 
 .task-icon {
@@ -624,7 +623,7 @@ textarea:focus {
 }
 
 .task-icon.timer-action {
-  min-width: 42px;
+  min-width: 44px;
   background: color-mix(in srgb, var(--green) 18%, white);
   font-weight: 800;
 }
