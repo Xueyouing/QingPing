@@ -2317,7 +2317,7 @@ button:active {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 8px 12px;
-  padding: 13px 14px;
+  padding: 14px 15px;
   border: 1px solid color-mix(in srgb, var(--accent) 34%, white);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.92);
@@ -2336,8 +2336,8 @@ button:active {
 
 .rest-toast .sprout {
   grid-row: span 3;
-  width: 38px;
-  height: 46px;
+  width: 42px;
+  height: 50px;
   color: var(--green-dark);
   transform-origin: bottom center;
   animation: sproutPop 1200ms ease-in-out infinite;
@@ -2345,15 +2345,16 @@ button:active {
 
 .rest-toast strong {
   color: var(--green-dark);
-  font-size: 15px;
+  font-size: 17px;
+  line-height: 1.1;
 }
 
 .rest-toast p {
   grid-column: 2;
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .rest-toast time {
@@ -2364,7 +2365,7 @@ button:active {
   border-radius: 999px;
   background: color-mix(in srgb, var(--green) 12%, white);
   color: var(--green-dark);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 18%, transparent);
 }
@@ -2387,25 +2388,68 @@ button:active {
 }
 
 .is-bubble .rest-toast {
-  inset: 5px;
+  inset: 0;
   grid-template-columns: 1fr;
   place-items: center;
-  gap: 2px;
-  padding: 7px;
-  border-radius: 28px;
+  align-content: center;
+  gap: 3px;
+  padding: 8px 7px 7px;
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 23%, rgba(255,255,255,0.95), rgba(255,255,255,0.72) 46%, rgba(226,247,235,0.3) 74%, transparent 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.62),
+    inset 0 -10px 20px rgba(66, 166, 90, 0.08),
+    0 0 0 5px color-mix(in srgb, var(--green) 7%, transparent);
+  backdrop-filter: blur(12px) saturate(1.08);
+  cursor: pointer;
   text-align: center;
   overflow: hidden;
 }
 
+.is-bubble .rest-toast::before,
+.is-bubble .rest-toast::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+}
+
+.is-bubble .rest-toast::before {
+  inset: 7px;
+  border: 1px solid color-mix(in srgb, var(--green) 16%, transparent);
+  opacity: 0.78;
+}
+
+.is-bubble .rest-toast::after {
+  left: 19px;
+  top: 10px;
+  width: 38px;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.76), transparent 68%);
+  transform: rotate(-10deg);
+}
+
 .is-bubble .rest-toast .sprout {
   grid-row: auto;
-  width: 34px;
-  height: 38px;
+  z-index: 1;
+  width: 31px;
+  height: 31px;
+  margin-top: -1px;
   animation: bubbleSproutRise 1400ms cubic-bezier(.18, .85, .18, 1) both, sproutPop 1300ms ease-in-out 900ms infinite;
 }
 
 .is-bubble .rest-toast strong {
-  font-size: 11px;
+  z-index: 1;
+  max-width: 66px;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--green-dark) 92%, #113c33);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .is-bubble .rest-toast p,
@@ -2414,12 +2458,17 @@ button:active {
 }
 
 .is-bubble .rest-toast time {
+  z-index: 1;
   grid-column: auto;
   min-width: 0;
-  padding: 2px 6px;
-  background: rgba(255, 255, 255, 0.62);
-  font-size: 9px;
-  line-height: 1.1;
+  padding: 2px 7px 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #226247;
+  font-size: 10px;
+  line-height: 1.15;
+  letter-spacing: 0;
+  box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.14);
 }
 
 .is-bubble.is-resting .bubble {

@@ -247,6 +247,7 @@ function bindEvents() {
     setAppWindowMode("panel");
   });
   els.restLater.addEventListener("click", hideRestToast);
+  els.restToast.addEventListener("click", onRestToastClick);
   [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify, els.restSound, els.restTimerEnabled, els.restMinutes].forEach((input) => input.addEventListener("change", updateSettings));
   [els.bubbleOpacity, els.panelOpacity].forEach((input) => input.addEventListener("input", updateSettings));
   els.chooseBackground.addEventListener("click", chooseBackgroundImage);
@@ -1550,6 +1551,13 @@ function renderRestCountdown() {
   }
   els.restCountdown.hidden = false;
   els.restCountdown.textContent = `休息 ${formatSeconds(restRemainingSeconds)}`;
+}
+
+function onRestToastClick(event) {
+  if (event.target.closest("button")) return;
+  if (currentWindowMode !== "bubble") return;
+  hideRestToast();
+  setAppWindowMode("panel");
 }
 
 function playRestSound() {
