@@ -26,6 +26,9 @@ const MOOD_LABELS = ["低落", "有点累", "平稳", "清亮", "很好"];
 const MOOD_MAP = { sad: 1, angry: 2, tired: 2, calm: 3, surprised: 4, happy: 5, done: 5, cheer: 5 };
 const REVIEW_CHART_MODES = ["ring", "ripple"];
 const REVIEW_COLORS = ["#42a65a", "#8e7ad8", "#3a9ab2", "#ffb74d", "#5ebd88", "#b99af2"];
+const DEFAULT_FOCUS_MINUTES = 45;
+const DEFAULT_FOCUS_SECONDS = DEFAULT_FOCUS_MINUTES * 60;
+const REST_SOUND_PRESETS = ["chime", "dew", "wind", "none"];
 const PLAN_STATUS = {
   active: "推进中",
   next: "下一步",
@@ -131,7 +134,12 @@ const els = {
   autoStart: $("#autoStart"),
   systemNotify: $("#systemNotify"),
   bubbleOpacity: $("#bubbleOpacity"),
+  restSound: $("#restSound"),
+  restTimerEnabled: $("#restTimerEnabled"),
+  restMinutes: $("#restMinutes"),
   restToast: $("#restToast"),
+  restMessage: $("#restMessage"),
+  restCountdown: $("#restCountdown"),
   restContinue: $("#restContinue"),
   restLater: $("#restLater"),
   resizeZones: [...document.querySelectorAll(".resize-zone")]
@@ -153,6 +161,10 @@ let planScreen = "list";
 let activePlanId = "";
 let currentDayKey = todayKey();
 let dayRolloverTimer = 0;
+let restTimerId = 0;
+let restRemainingSeconds = 0;
+let audioContext = null;
+let focusGuardTimer = 0;
 
 init();
 
@@ -171,8 +183,13 @@ function init() {
   window.setTimeout(openPanelFromHash, 0);
   window.addEventListener("hashchange", openPanelFromHash);
   window.addEventListener("focus", ensureTodayState);
+  window.addEventListener("blur", armFocusGuard);
+  window.addEventListener("focus", releaseFocusGuard);
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) ensureTodayState();
+    if (!document.hidden) {
+      ensureTodayState();
+      releaseFocusGuard();
+    }
   });
 }
 
@@ -230,7 +247,7 @@ function bindEvents() {
     setAppWindowMode("panel");
   });
   els.restLater.addEventListener("click", hideRestToast);
-  [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify].forEach((input) => input.addEventListener("change", updateSettings));
+  [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify, els.restSound, els.restTimerEnabled, els.restMinutes].forEach((input) => input.addEventListener("change", updateSettings));
   [els.bubbleOpacity, els.panelOpacity].forEach((input) => input.addEventListener("input", updateSettings));
   els.chooseBackground.addEventListener("click", chooseBackgroundImage);
   els.bubble.addEventListener("pointerdown", onBubblePointerDown);
@@ -253,11 +270,11 @@ function bindEvents() {
 
 function loadState() {
   const blank = {
-    tasks: [makeTask("整理今日重点", 25, "计划"), makeTask("写一段工作记录", 20, "工作")],
+    tasks: [makeTask("整理今日重点", DEFAULT_FOCUS_MINUTES, "计划"), makeTask("写一段工作记录", DEFAULT_FOCUS_MINUTES, "工作")],
     history: [],
     reflections: {},
     stagePlans: [],
-    timer: { taskId: "", mode: "countdown", seconds: 1500, totalSeconds: 1500, running: false, queue: [] },
+    timer: { taskId: "", mode: "countdown", seconds: DEFAULT_FOCUS_SECONDS, totalSeconds: DEFAULT_FOCUS_SECONDS, running: false, queue: [] },
     settings: {
       activeView: "today",
       theme: "green",
@@ -267,6 +284,9 @@ function loadState() {
       bubbleOpacity: 70,
       panelOpacity: 92,
       showBubbleTimer: true,
+      soundPreset: "chime",
+      restTimerEnabled: true,
+      restMinutes: 5,
       reviewChartMode: "ring",
       backgroundPreset: "dew",
       backgroundMode: "preset",
@@ -453,10 +473,9 @@ function renderTasks() {
   completedToday.forEach((task) => {
     const item = document.createElement("li");
     item.className = "completed-item";
-    item.innerHTML = `<div class="completed-row"><span class="history-title"></span><small class="history-meta"></small></div><span class="session-line"></span>`;
+    item.innerHTML = `<div class="completed-row"><span class="history-title"></span><small class="history-meta"></small></div>`;
     item.querySelector(".history-title").textContent = task.title;
-    item.querySelector(".history-meta").textContent = `${task.tag || "未分类"} · ${formatDateTime(task.completedAt)} · ${formatFocus(getTaskDaySeconds(task, today))}`;
-    item.querySelector(".session-line").textContent = formatSessionsForDay(task.sessions, today);
+    item.querySelector(".history-meta").textContent = formatCompletedMeta(task, today);
     els.completedTodayList.appendChild(item);
   });
 }
@@ -525,7 +544,7 @@ function renderReviewRipple(items, total) {
   items.slice(0, 5).forEach((item, index) => {
     const line = document.createElement("div");
     line.className = "ripple-line";
-    line.style.setProperty("--share", `${Math.max(14, (item.seconds / total) * 100)}%`);
+    line.style.setProperty("--share", `${Math.max(1, (item.seconds / total) * 100)}%`);
     line.style.setProperty("--ripple-color", REVIEW_COLORS[index % REVIEW_COLORS.length]);
     const title = document.createElement("strong");
     const time = document.createElement("span");
@@ -620,7 +639,7 @@ function renderReviewExpandedRipple(items, total) {
   items.slice(0, 8).forEach((item, index) => {
     const line = document.createElement("div");
     line.className = "ripple-line";
-    line.style.setProperty("--share", `${Math.max(18, (item.seconds / total) * 100)}%`);
+    line.style.setProperty("--share", `${Math.max(1, (item.seconds / total) * 100)}%`);
     line.style.setProperty("--ripple-color", REVIEW_COLORS[index % REVIEW_COLORS.length]);
     const title = document.createElement("strong");
     const time = document.createElement("span");
@@ -801,6 +820,9 @@ function renderSettings() {
   els.autoStart.checked = Boolean(state.settings.autoStart);
   els.systemNotify.checked = Boolean(state.settings.systemNotify);
   els.bubbleOpacity.value = state.settings.bubbleOpacity;
+  els.restSound.value = state.settings.soundPreset;
+  els.restTimerEnabled.checked = Boolean(state.settings.restTimerEnabled);
+  els.restMinutes.value = state.settings.restMinutes;
 }
 
 function renderBubble() {
@@ -847,7 +869,10 @@ function applyWindowMode(mode, switching = false) {
   document.body.classList.toggle("is-bubble", currentWindowMode === "bubble");
   els.panel.classList.toggle("is-open", currentWindowMode === "panel");
   els.bubble.classList.toggle("is-open", currentWindowMode === "panel");
-  if (currentWindowMode === "bubble") els.settingsPanel.hidden = true;
+  if (currentWindowMode === "bubble") {
+    els.settingsPanel.hidden = true;
+    document.body.classList.remove("is-focus-guard");
+  }
   renderBubble();
 }
 
@@ -867,9 +892,27 @@ function commitWindowMode(mode) {
 }
 
 async function setAppWindowMode(mode) {
+  if (mode === currentWindowMode && !document.body.classList.contains("is-switching")) {
+    applyWindowMode(mode, false);
+    return;
+  }
   prepareWindowMode(mode);
   await desktopBridge?.setWindowMode?.(mode);
   if (!desktopBridge?.setWindowMode) commitWindowMode(mode);
+}
+
+function armFocusGuard() {
+  if (currentWindowMode !== "panel") return;
+  window.clearTimeout(focusGuardTimer);
+  document.body.classList.add("is-focus-guard");
+}
+
+function releaseFocusGuard() {
+  window.clearTimeout(focusGuardTimer);
+  document.body.classList.add("is-focus-guard");
+  focusGuardTimer = window.setTimeout(() => {
+    document.body.classList.remove("is-focus-guard");
+  }, 180);
 }
 
 function switchView(view) {
@@ -904,7 +947,7 @@ function addTask(event) {
   if (!raw) return;
   const match = raw.match(/^(.*?)(?:\s+(\d{1,3})m)?$/i);
   const title = (match?.[1] || raw).trim();
-  const minutes = clamp(Number(match?.[2] || 25), 1, 240);
+  const minutes = clamp(Number(match?.[2] || DEFAULT_FOCUS_MINUTES), 1, 240);
   const task = makeTask(title || "未命名任务", minutes, getSelectedTag());
   state.tasks.push(task);
   if (!state.timer.taskId) selectTask(task.id);
@@ -967,7 +1010,7 @@ function setTimerMode(mode) {
   stopTimer();
   state.timer.mode = mode;
   state.timer.running = false;
-  state.timer.totalSeconds = task ? Math.max(1, task.minutes * 60) : 1500;
+  state.timer.totalSeconds = task ? Math.max(1, task.minutes * 60) : DEFAULT_FOCUS_SECONDS;
   state.timer.seconds = mode === "countup" ? 0 : state.timer.totalSeconds;
   saveState();
   render();
@@ -1081,7 +1124,7 @@ function commitTimerEdit() {
     els.countdownMinutes.value = String(Math.max(1, Math.round(seconds / 60)));
     saveState();
   } else {
-    showNotice("时间格式可用 25、25:00 或 1:30:00。");
+    showNotice("时间格式可用 45、45:00 或 1:30:00。");
   }
   cancelTimerEdit();
   render();
@@ -1154,7 +1197,14 @@ function updateTaskTag(taskId, value) {
 function recordTaskSession(task, seconds) {
   if (!seconds || seconds <= 0) return;
   task.sessions = Array.isArray(task.sessions) ? task.sessions : [];
-  task.sessions.push({ seconds: Math.round(seconds), mode: state.timer.mode, endedAt: new Date().toISOString() });
+  const endedAt = new Date();
+  const duration = Math.round(seconds);
+  task.sessions.push({
+    seconds: duration,
+    mode: state.timer.mode,
+    startedAt: new Date(endedAt.getTime() - duration * 1000).toISOString(),
+    endedAt: endedAt.toISOString()
+  });
 }
 
 function addTaskFocusSecond(task, day, seconds) {
@@ -1401,6 +1451,9 @@ function updateSettings() {
   state.settings.systemNotify = els.systemNotify.checked;
   state.settings.bubbleOpacity = Number(els.bubbleOpacity.value);
   state.settings.panelOpacity = Number(els.panelOpacity.value);
+  state.settings.soundPreset = REST_SOUND_PRESETS.includes(els.restSound.value) ? els.restSound.value : "chime";
+  state.settings.restTimerEnabled = els.restTimerEnabled.checked;
+  state.settings.restMinutes = clamp(Number(els.restMinutes.value || 5), 1, 60);
   applySettings();
   saveState();
   renderBubble();
@@ -1447,19 +1500,97 @@ function showNotice(message) {
 }
 
 function showRestToast() {
+  playRestSound();
+  document.body.classList.add("is-resting");
   els.restToast.hidden = false;
   els.restToast.classList.remove("is-leaving");
   window.clearTimeout(showRestToast.timer);
-  showRestToast.timer = window.setTimeout(hideRestToast, 6500);
+  window.clearTimeout(hideRestToast.timer);
+  stopRestTimer();
+  restRemainingSeconds = state.settings.restTimerEnabled ? clamp(Number(state.settings.restMinutes || 5), 1, 60) * 60 : 0;
+  els.restMessage.textContent = "起身喝口水，看一眼远处，再把心轻轻放回来。";
+  renderRestCountdown();
+  if (restRemainingSeconds > 0) {
+    restTimerId = window.setInterval(() => {
+      restRemainingSeconds = Math.max(0, restRemainingSeconds - 1);
+      renderRestCountdown();
+      if (restRemainingSeconds <= 0) {
+        stopRestTimer();
+        els.restMessage.textContent = "休息好了，等风停一停，再继续向前。";
+        showRestToast.timer = window.setTimeout(hideRestToast, 5200);
+      }
+    }, 1000);
+  } else {
+    showRestToast.timer = window.setTimeout(hideRestToast, 6500);
+  }
 }
 
 function hideRestToast() {
+  stopRestTimer();
+  document.body.classList.remove("is-resting");
   els.restToast.classList.add("is-leaving");
   window.clearTimeout(showRestToast.timer);
-  window.setTimeout(() => {
+  window.clearTimeout(hideRestToast.timer);
+  hideRestToast.timer = window.setTimeout(() => {
     els.restToast.hidden = true;
     els.restToast.classList.remove("is-leaving");
   }, 220);
+}
+
+function stopRestTimer() {
+  if (restTimerId) window.clearInterval(restTimerId);
+  restTimerId = 0;
+}
+
+function renderRestCountdown() {
+  if (!state.settings.restTimerEnabled || restRemainingSeconds <= 0) {
+    els.restCountdown.hidden = true;
+    els.restCountdown.textContent = "";
+    return;
+  }
+  els.restCountdown.hidden = false;
+  els.restCountdown.textContent = `休息 ${formatSeconds(restRemainingSeconds)}`;
+}
+
+function playRestSound() {
+  const preset = state.settings.soundPreset;
+  if (preset === "none") return;
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) return;
+  try {
+    audioContext = audioContext || new AudioContextCtor();
+    if (audioContext.state === "suspended") audioContext.resume();
+    const now = audioContext.currentTime;
+    if (preset === "dew") {
+      playTone(740, now, 0.11, "sine", 0.045);
+      playTone(980, now + 0.16, 0.12, "triangle", 0.035);
+      return;
+    }
+    if (preset === "wind") {
+      playTone(420, now, 0.28, "sine", 0.025);
+      playTone(540, now + 0.08, 0.36, "sine", 0.022);
+      return;
+    }
+    playTone(660, now, 0.14, "triangle", 0.04);
+    playTone(880, now + 0.13, 0.18, "triangle", 0.036);
+    playTone(1320, now + 0.28, 0.2, "sine", 0.025);
+  } catch (error) {
+    console.warn("Failed to play Qingping rest sound:", error);
+  }
+}
+
+function playTone(frequency, startAt, duration, type = "sine", volume = 0.035) {
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startAt);
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(startAt);
+  oscillator.stop(startAt + duration + 0.03);
 }
 
 function onBubblePointerDown(event) {
@@ -1584,7 +1715,7 @@ function getTodayReviewDistribution() {
   [...state.tasks, ...state.history].forEach((task) => {
     const seconds = getTaskDaySeconds(task, day);
     if (!seconds) return;
-    const key = task.id || `${task.title}-${task.createdAt || ""}`;
+    const key = getReviewTaskKey(task);
     const entry = bucket.get(key) || {
       title: task.title || "未命名任务",
       tag: task.tag || "未分类",
@@ -1596,6 +1727,12 @@ function getTodayReviewDistribution() {
     bucket.set(key, entry);
   });
   return [...bucket.values()].sort((a, b) => b.seconds - a.seconds);
+}
+
+function getReviewTaskKey(task) {
+  const title = String(task?.title || "未命名任务").trim().replace(/\s+/g, " ").toLowerCase();
+  const tag = String(task?.tag || "未分类").trim().replace(/\s+/g, " ").toLowerCase();
+  return `${title}::${tag}`;
 }
 
 function countTaskSessionsForDay(task, day) {
@@ -1611,12 +1748,11 @@ function getReviewBalance(items, topShare) {
 }
 
 function getReviewInsight(items, total, topShare) {
-  if (!items.length || !total) return "开始一段专注后，这里会像水面一样记录今天的时间流向。";
-  const top = items[0];
-  if (items.length === 1) return "今天的专注集中在一条主线，节奏清晰而安静。";
-  if (topShare >= 0.72) return `${top.title} 是今天的时间主流，其他任务像支流一样辅助它前进。`;
-  if (topShare <= 0.42) return "今天的时间分布比较均衡，回顾时可以记录切换任务后的精力变化。";
-  return `${top.title} 仍是主要方向，但时间没有过度集中，节奏相对舒展。`;
+  if (!items.length || !total) return "开始一段专注后，这里会记录今天的时间分布。";
+  if (items.length === 1) return "今日专注集中在一项任务。";
+  if (topShare >= 0.72) return "今日专注明显集中。";
+  if (topShare <= 0.42) return "今日专注分布较均衡。";
+  return "今日专注节奏较稳定。";
 }
 
 function getTaskDaySeconds(task, day) {
@@ -1627,7 +1763,7 @@ function getTaskDaySeconds(task, day) {
   }, 0);
 }
 
-function makeTask(title, minutes = 25, tag = "") {
+function makeTask(title, minutes = DEFAULT_FOCUS_MINUTES, tag = "") {
   return { id: makeId(), title, minutes, tag, actualSeconds: 0, dailySeconds: {}, sessions: [], createdAt: new Date().toISOString() };
 }
 
@@ -1636,7 +1772,7 @@ function migrateTask(task = {}) {
   return {
     id: task.id || makeId(),
     title: task.title || "未命名任务",
-    minutes: clamp(Number(task.minutes || task.duration || 25), 1, 240),
+    minutes: clamp(Number(task.minutes || task.duration || DEFAULT_FOCUS_MINUTES), 1, 240),
     tag: task.tag || "",
     actualSeconds: Number(task.actualSeconds || 0),
     dailySeconds: migrateDailySeconds(task.dailySeconds, sessions),
@@ -1650,10 +1786,13 @@ function migrateHistoryItem(task = {}) {
 }
 
 function migrateSession(session = {}) {
+  const endedAt = session.endedAt || new Date().toISOString();
+  const seconds = Math.max(0, Number(session.seconds || 0));
   return {
-    seconds: Math.max(0, Number(session.seconds || 0)),
+    seconds,
     mode: ["countdown", "countup"].includes(session.mode) ? session.mode : "countdown",
-    endedAt: session.endedAt || new Date().toISOString()
+    startedAt: session.startedAt || "",
+    endedAt
   };
 }
 
@@ -1673,11 +1812,13 @@ function migrateDailySeconds(dailySeconds, sessions = []) {
 
 function migrateTimer(timer = {}) {
   const mode = ["countdown", "countup"].includes(timer.mode) ? timer.mode : "countdown";
+  const seconds = Number(timer.seconds);
+  const totalSeconds = Number(timer.totalSeconds);
   return {
     taskId: timer.taskId || "",
     mode,
-    seconds: Math.max(0, Number(timer.seconds || (mode === "countup" ? 0 : 1500))),
-    totalSeconds: Math.max(1, Number(timer.totalSeconds || 1500)),
+    seconds: Math.max(0, Number.isFinite(seconds) ? seconds : (mode === "countup" ? 0 : DEFAULT_FOCUS_SECONDS)),
+    totalSeconds: Math.max(1, Number.isFinite(totalSeconds) && totalSeconds > 0 ? totalSeconds : DEFAULT_FOCUS_SECONDS),
     running: false,
     queue: Array.isArray(timer.queue) ? timer.queue.map((value) => Math.max(60, Number(value || 0))).filter(Boolean) : []
   };
@@ -1740,6 +1881,9 @@ function migrateSettings(settings = {}) {
     theme: THEMES[theme] ? theme : "green",
     tags: Array.from(new Set([...(Array.isArray(settings.tags) ? settings.tags : []), ...DEFAULT_TAGS].filter(Boolean))),
     showBubbleTimer: settings.showBubbleTimer !== false,
+    soundPreset: REST_SOUND_PRESETS.includes(settings.soundPreset) ? settings.soundPreset : "chime",
+    restTimerEnabled: settings.restTimerEnabled !== false,
+    restMinutes: clamp(Number(settings.restMinutes || 5), 1, 60),
     reviewChartMode,
     bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 45, 95),
     panelOpacity: clamp(Number(settings.panelOpacity || 92), 68, 98),
@@ -1791,9 +1935,28 @@ function formatFocus(seconds) {
   return minutes >= 60 ? `${Math.floor(minutes / 60)}h${minutes % 60 ? `${minutes % 60}m` : ""}` : `${minutes}m`;
 }
 
+function formatCompletedMeta(task, day = todayKey()) {
+  return [
+    task.tag || "未分类",
+    formatSessionPeriodForDay(task.sessions, day, task.completedAt),
+    formatFocus(getTaskDaySeconds(task, day))
+  ].filter(Boolean).join(" · ");
+}
+
+function formatSessionPeriodForDay(sessions = [], day = todayKey(), fallbackTime = "") {
+  const daySessions = sessions
+    .filter((session) => isSameDay(session.endedAt, day))
+    .sort((a, b) => new Date(a.endedAt) - new Date(b.endedAt));
+  const firstWithStart = daySessions.find((session) => session.startedAt);
+  const last = daySessions[daySessions.length - 1];
+  if (firstWithStart && last) return `${formatDateTime(firstWithStart.startedAt)}-${formatDateTime(last.endedAt)}`;
+  if (last?.endedAt) return formatDateTime(last.endedAt);
+  return formatDateTime(fallbackTime);
+}
+
 function formatSessionsForDay(sessions = [], day = todayKey()) {
   const lines = sessions.filter((session) => isSameDay(session.endedAt, day));
-  return lines.length ? lines.map((session) => `${session.mode === "countup" ? "正" : "倒"} ${formatFocus(session.seconds)}`).join(" / ") : "暂无分段记录";
+  return lines.length ? lines.map((session) => formatFocus(session.seconds)).join(" / ") : "暂无分段记录";
 }
 
 function totalSessionSeconds(sessions = []) {

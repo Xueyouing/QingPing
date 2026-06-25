@@ -77,6 +77,7 @@ function delay(ms) {
 
 async function setWindowMode(mode) {
   if (!mainWindow || !["bubble", "panel"].includes(mode)) return windowMode;
+  if (mode === windowMode && mainWindow.isVisible()) return windowMode;
 
   const current = mainWindow.getBounds();
   const token = ++modeSwitchToken;

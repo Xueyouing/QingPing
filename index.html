@@ -74,7 +74,7 @@
                 <circle class="progress-ring__track" cx="84" cy="84" r="74"></circle>
                 <circle class="progress-ring__bar" id="timerRing" cx="84" cy="84" r="74"></circle>
               </svg>
-              <button class="timer-text" id="timerText" type="button" aria-label="编辑倒计时时间">25:00</button>
+              <button class="timer-text" id="timerText" type="button" aria-label="编辑倒计时时间">45:00</button>
               <input class="timer-edit" id="timerEdit" type="text" inputmode="numeric" aria-label="倒计时时间输入" hidden>
             </div>
             <div class="focus-actions">
@@ -86,7 +86,7 @@
           <label class="select-field"><span>当前任务</span><select id="taskSelect"></select></label>
           <div class="countdown-builder" id="countdownBuilder">
             <span>倒计时段</span>
-            <input id="countdownMinutes" type="number" min="1" max="240" step="1" value="25" aria-label="倒计时分钟">
+            <input id="countdownMinutes" type="number" min="1" max="240" step="1" value="45" aria-label="倒计时分钟">
             <button class="secondary-button" id="addCountdown" type="button">加入队列</button>
           </div>
           <div class="segment-strip" id="segmentQueue" aria-label="倒计时队列"></div>
@@ -246,6 +246,9 @@
         <label class="settings-row"><span>开机自启</span><input id="autoStart" type="checkbox"></label>
         <label class="settings-row"><span>系统通知</span><input id="systemNotify" type="checkbox" checked></label>
         <label class="settings-row"><span>气泡透明度</span><input id="bubbleOpacity" type="range" min="45" max="95" value="70"></label>
+        <label class="settings-row"><span>结束音效</span><select id="restSound"><option value="chime">清铃</option><option value="dew">水滴</option><option value="wind">微风</option><option value="none">静音</option></select></label>
+        <label class="settings-row"><span>休息计时</span><input id="restTimerEnabled" type="checkbox" checked></label>
+        <label class="settings-row"><span>休息分钟</span><input id="restMinutes" type="number" min="1" max="60" step="1" value="5"></label>
         <div class="settings-block">
           <span>数据导出</span>
           <button class="secondary-button wide-button" id="exportHistory" type="button">导出历史 CSV</button>
@@ -255,7 +258,8 @@
       <div class="rest-toast" id="restToast" hidden>
         <svg class="sprout" viewBox="0 0 48 48" aria-hidden="true"><use href="#qp-sprout"></use></svg>
         <strong>青萍冒出啦</strong>
-        <p>起身喝口水，看一眼远处，再把心轻轻放回来。</p>
+        <p id="restMessage">起身喝口水，看一眼远处，再把心轻轻放回来。</p>
+        <time id="restCountdown" aria-live="polite"></time>
         <div>
           <button class="primary-button" id="restContinue" type="button">继续专注</button>
           <button class="ghost-button" id="restLater" type="button">稍后</button>

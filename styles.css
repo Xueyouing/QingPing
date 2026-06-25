@@ -60,6 +60,17 @@ button:disabled {
   overflow: hidden;
 }
 
+.desktop::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  border-radius: 18px;
+  background: var(--panel-bg);
+  opacity: 0;
+  pointer-events: none;
+}
+
 .ambient {
   display: none;
   align-items: end;
@@ -146,9 +157,9 @@ button:disabled {
   transition: none !important;
 }
 
-.is-switching .panel,
-.is-switching .bubble {
-  opacity: 0 !important;
+.is-panel.is-switching .desktop::before,
+.is-panel.is-focus-guard .desktop::before {
+  opacity: 1;
 }
 
 .is-bubble .panel,
@@ -646,14 +657,17 @@ textarea:focus {
 
 .completed-row .history-title {
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .completed-row .history-meta {
-  flex: 0 1 52%;
+  flex: 0 0 auto;
+  max-width: 66%;
   margin-top: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: right;
 }
 
 .completed-item .session-line {
@@ -2196,6 +2210,17 @@ button:active {
   accent-color: var(--green);
 }
 
+.settings-row select,
+.settings-row input[type="number"] {
+  width: 100%;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font-size: 13px;
+}
+
 .settings-block {
   margin-top: 10px;
   padding-top: 10px;
@@ -2331,6 +2356,23 @@ button:active {
   line-height: 1.55;
 }
 
+.rest-toast time {
+  grid-column: 2;
+  justify-self: start;
+  min-width: 78px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--green) 12%, white);
+  color: var(--green-dark);
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--green) 18%, transparent);
+}
+
+.rest-toast time[hidden] {
+  display: none;
+}
+
 .rest-toast div {
   grid-column: 2;
   display: flex;
@@ -2352,12 +2394,14 @@ button:active {
   padding: 7px;
   border-radius: 28px;
   text-align: center;
+  overflow: hidden;
 }
 
 .is-bubble .rest-toast .sprout {
   grid-row: auto;
-  width: 28px;
-  height: 31px;
+  width: 34px;
+  height: 38px;
+  animation: bubbleSproutRise 1400ms cubic-bezier(.18, .85, .18, 1) both, sproutPop 1300ms ease-in-out 900ms infinite;
 }
 
 .is-bubble .rest-toast strong {
@@ -2367,6 +2411,21 @@ button:active {
 .is-bubble .rest-toast p,
 .is-bubble .rest-toast div {
   display: none;
+}
+
+.is-bubble .rest-toast time {
+  grid-column: auto;
+  min-width: 0;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.62);
+  font-size: 9px;
+  line-height: 1.1;
+}
+
+.is-bubble.is-resting .bubble {
+  box-shadow:
+    0 0 0 8px color-mix(in srgb, var(--green) 18%, transparent),
+    0 14px 30px rgba(54, 94, 65, var(--bubble-shadow-alpha));
 }
 
 .bubble {
@@ -2506,6 +2565,23 @@ button:active {
 
   50% {
     transform: translateY(-4px) rotate(2deg);
+  }
+}
+
+@keyframes bubbleSproutRise {
+  0% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.78) rotate(-6deg);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.05) rotate(2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(-1deg);
   }
 }
 
