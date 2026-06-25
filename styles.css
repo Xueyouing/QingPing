@@ -1061,7 +1061,7 @@ textarea:focus {
   align-items: center;
   min-height: 26px;
   padding-left: 11px;
-  border-radius: 999px 60% 999px 60%;
+  border-radius: 12px;
   overflow: hidden;
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--ripple-color) 24%, transparent) 0 var(--share), rgba(255, 255, 255, 0.5) var(--share) 100%);
@@ -1230,7 +1230,7 @@ textarea:focus {
 }
 
 .review-expanded-shell.is-ring {
-  grid-template-columns: minmax(170px, 0.9fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
 }
 
 .review-expanded-shell.is-ripple {
@@ -1241,19 +1241,89 @@ textarea:focus {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.review-expanded-shell.is-ring .review-expanded-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .review-ring-large {
   justify-self: center;
-  width: min(210px, 46vw);
-  height: min(210px, 46vw);
+  width: min(320px, 76vw);
+  height: min(320px, 76vw);
+  margin: 4px 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.58),
+    inset 0 -18px 40px rgba(36, 129, 92, 0.12),
+    0 24px 58px rgba(52, 124, 88, 0.16);
 }
 
 .review-ring-large .review-ring-core {
-  width: 104px;
-  height: 104px;
+  width: 112px;
+  height: 112px;
+  z-index: 4;
 }
 
 .review-ring-large .review-ring-core strong {
   font-size: 22px;
+}
+
+.review-ring-guide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 41%;
+  height: 1px;
+  transform: rotate(var(--guide-angle));
+  transform-origin: left center;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--guide-color) 68%, rgba(255,255,255,0.4)), transparent);
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.review-ring-callout {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  gap: 1px;
+  width: 82px;
+  min-height: 38px;
+  padding: 6px 7px;
+  border-radius: 13px;
+  transform: translate(-50%, -50%);
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.9), rgba(246,255,249,0.68));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--callout-color) 26%, transparent),
+    0 10px 22px rgba(32, 91, 62, 0.12);
+  pointer-events: none;
+}
+
+.review-ring-callout::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--callout-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--callout-color) 16%, transparent);
+}
+
+.review-ring-callout b,
+.review-ring-callout small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-ring-callout b {
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.review-ring-callout small {
+  color: var(--green-dark);
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .review-ripple-large {

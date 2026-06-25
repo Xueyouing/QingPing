@@ -151,11 +151,14 @@ let resizeFrame = 0;
 let pendingResizePoint = null;
 let planScreen = "list";
 let activePlanId = "";
+let currentDayKey = todayKey();
+let dayRolloverTimer = 0;
 
 init();
 
 function init() {
   normalizeState();
+  currentDayKey = todayKey();
   applyLaunchDefaultView();
   bindEvents();
   applySettings();
@@ -163,9 +166,14 @@ function init() {
   selectFallbackTask();
   render();
   hydrateDesktop();
+  scheduleDayRollover();
   openPanelFromHash();
   window.setTimeout(openPanelFromHash, 0);
   window.addEventListener("hashchange", openPanelFromHash);
+  window.addEventListener("focus", ensureTodayState);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) ensureTodayState();
+  });
 }
 
 function bindEvents() {
@@ -332,7 +340,42 @@ function saveState() {
   desktopBridge?.saveState?.(clone(state)).catch((error) => console.warn("Failed to save Qingping state:", error));
 }
 
+function scheduleDayRollover() {
+  window.clearTimeout(dayRolloverTimer);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(24, 0, 1, 0);
+  const delay = Math.max(1000, Math.min(next.getTime() - now.getTime(), 2147483647));
+  dayRolloverTimer = window.setTimeout(() => {
+    handleDayRollover();
+    scheduleDayRollover();
+  }, delay);
+}
+
+function ensureTodayState() {
+  return todayKey() !== currentDayKey ? handleDayRollover() : false;
+}
+
+function handleDayRollover() {
+  const nextDay = todayKey();
+  if (nextDay === currentDayKey) return false;
+  currentDayKey = nextDay;
+  if (state.timer.running) {
+    stopTimer();
+    state.timer.running = false;
+  }
+  if (!isTodayOpenTask(state.tasks.find((task) => task.id === state.timer.taskId), nextDay)) {
+    state.timer.taskId = "";
+    state.timer.queue = [];
+  }
+  selectFallbackTask(nextDay);
+  saveState();
+  render();
+  return true;
+}
+
 function render() {
+  if (ensureTodayState()) return;
   renderTagSelects();
   renderFocus();
   renderTasks();
@@ -365,7 +408,7 @@ function renderFocus() {
 
 function renderTasks() {
   const today = todayKey();
-  const todayTasks = state.tasks.filter((task) => isSameDay(task.createdAt, today));
+  const todayTasks = getTodayOpenTasks(today);
   const completedToday = getTodayCompletedTasks();
   els.summaryOpen.textContent = String(todayTasks.length);
   els.summaryFocus.textContent = formatFocus(getTodayFocusSeconds());
@@ -376,10 +419,10 @@ function renderTasks() {
   els.completedTodayList.innerHTML = "";
   els.taskSelect.innerHTML = "";
 
-  if (!state.tasks.length) {
-    els.taskSelect.innerHTML = `<option value="">暂无任务</option>`;
+  if (!todayTasks.length) {
+    els.taskSelect.innerHTML = `<option value="">暂无今日任务</option>`;
   } else {
-    state.tasks.forEach((task) => {
+    todayTasks.forEach((task) => {
       const option = new Option(task.title, task.id, task.id === state.timer.taskId, task.id === state.timer.taskId);
       els.taskSelect.appendChild(option);
     });
@@ -548,18 +591,21 @@ function renderReviewOverlay() {
 }
 
 function renderReviewExpandedRing(items, total) {
-  if (!items.length || !total) {
+  clearReviewExpandedRingAnnotations();
+  const displayItems = getReviewDisplayItems(items, 6);
+  if (!displayItems.length || !total) {
     els.reviewExpandedRing.style.background = "conic-gradient(rgba(66, 166, 90, 0.18), rgba(142, 122, 216, 0.12), rgba(58, 154, 178, 0.14), rgba(66, 166, 90, 0.18))";
     return;
   }
   let cursor = 0;
-  const stops = items.map((item, index) => {
+  const stops = displayItems.map((item, index) => {
     const start = cursor;
     cursor += (item.seconds / total) * 100;
     const color = REVIEW_COLORS[index % REVIEW_COLORS.length];
     return `${color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
   });
   els.reviewExpandedRing.style.background = `conic-gradient(${stops.join(", ")})`;
+  renderReviewRingCallouts(displayItems, total);
 }
 
 function renderReviewExpandedRipple(items, total) {
@@ -587,7 +633,7 @@ function renderReviewExpandedRipple(items, total) {
 
 function renderReviewExpandedLegend(items, total) {
   els.reviewExpandedLegend.innerHTML = "";
-  const visible = items.slice(0, 6);
+  const visible = getReviewDisplayItems(items, 6);
   if (!visible.length || !total) {
     els.reviewExpandedLegend.innerHTML = `<li><i></i><span>暂无任务时间</span><b>0%</b></li>`;
     return;
@@ -600,6 +646,49 @@ function renderReviewExpandedLegend(items, total) {
     row.querySelector("b").textContent = `${Math.round((item.seconds / total) * 100)}%`;
     els.reviewExpandedLegend.appendChild(row);
   });
+}
+
+function clearReviewExpandedRingAnnotations() {
+  els.reviewExpandedRing.querySelectorAll(".review-ring-guide, .review-ring-callout").forEach((node) => node.remove());
+}
+
+function renderReviewRingCallouts(items, total) {
+  let cursor = 0;
+  items.forEach((item, index) => {
+    const share = item.seconds / total;
+    const mid = cursor + share / 2;
+    cursor += share;
+    const angle = mid * 360 - 90;
+    const radians = angle * Math.PI / 180;
+    const color = REVIEW_COLORS[index % REVIEW_COLORS.length];
+
+    const guide = document.createElement("i");
+    guide.className = "review-ring-guide";
+    guide.style.setProperty("--guide-angle", `${angle}deg`);
+    guide.style.setProperty("--guide-color", color);
+
+    const callout = document.createElement("span");
+    callout.className = "review-ring-callout";
+    callout.style.setProperty("--callout-color", color);
+    callout.style.left = `${50 + Math.cos(radians) * 43}%`;
+    callout.style.top = `${50 + Math.sin(radians) * 43}%`;
+    callout.innerHTML = "<b></b><small></small>";
+    callout.querySelector("b").textContent = item.title;
+    callout.querySelector("small").textContent = `${formatFocus(item.seconds)} · ${Math.round(share * 100)}%`;
+
+    els.reviewExpandedRing.append(guide, callout);
+  });
+}
+
+function getReviewDisplayItems(items, limit = 6) {
+  if (items.length <= limit) return items;
+  const head = items.slice(0, Math.max(1, limit - 1));
+  const rest = items.slice(head.length).reduce((entry, item) => {
+    entry.seconds += item.seconds;
+    entry.sessions += item.sessions;
+    return entry;
+  }, { title: "其他", tag: "汇总", seconds: 0, sessions: 0 });
+  return [...head, rest].filter((item) => item.seconds > 0);
 }
 
 function renderMoodRating(score) {
@@ -833,9 +922,10 @@ function getSelectedTag() {
   return tag;
 }
 
-function selectFallbackTask() {
-  if (state.tasks.some((task) => task.id === state.timer.taskId)) return;
-  state.timer.taskId = state.tasks[0]?.id || "";
+function selectFallbackTask(day = todayKey()) {
+  const tasks = getTodayOpenTasks(day);
+  if (tasks.some((task) => task.id === state.timer.taskId)) return;
+  state.timer.taskId = tasks[0]?.id || "";
   const task = getCurrentTask();
   if (task) {
     state.timer.totalSeconds = Math.max(1, task.minutes * 60);
@@ -844,7 +934,7 @@ function selectFallbackTask() {
 }
 
 function selectTask(taskId) {
-  state.timer.taskId = taskId;
+  state.timer.taskId = getTodayOpenTasks().some((task) => task.id === taskId) ? taskId : "";
   const task = getCurrentTask();
   stopTimer();
   state.timer.running = false;
@@ -857,6 +947,12 @@ function selectTask(taskId) {
 }
 
 async function startTaskTimer(taskId) {
+  if (!getTodayOpenTasks().some((task) => task.id === taskId)) {
+    showNotice("只能从今天要做中选择任务计时。");
+    selectFallbackTask();
+    render();
+    return;
+  }
   if (state.timer.running) pauseTimer(false);
   selectTask(taskId);
   state.settings.activeView = "focus";
@@ -912,6 +1008,7 @@ function stopTimer() {
 }
 
 function tickTimer() {
+  if (ensureTodayState()) return;
   const task = getCurrentTask();
   if (!task) {
     pauseTimer();
@@ -1449,8 +1546,17 @@ function togglePanel() {
   setAppWindowMode(currentWindowMode === "panel" ? "bubble" : "panel");
 }
 
+function getTodayOpenTasks(day = todayKey()) {
+  return state.tasks.filter((task) => isTodayOpenTask(task, day));
+}
+
+function isTodayOpenTask(task, day = todayKey()) {
+  return Boolean(task) && isSameDay(task.createdAt, day);
+}
+
 function getCurrentTask() {
-  return state.tasks.find((task) => task.id === state.timer.taskId) || null;
+  const task = state.tasks.find((item) => item.id === state.timer.taskId) || null;
+  return isTodayOpenTask(task) ? task : null;
 }
 
 function getTimerProgress() {
@@ -1507,7 +1613,7 @@ function getReviewBalance(items, topShare) {
 function getReviewInsight(items, total, topShare) {
   if (!items.length || !total) return "开始一段专注后，这里会像水面一样记录今天的时间流向。";
   const top = items[0];
-  if (items.length === 1) return `${top.title} 占据了今天的全部专注，适合在回顾里写下这条主线的推进。`;
+  if (items.length === 1) return "今天的专注集中在一条主线，节奏清晰而安静。";
   if (topShare >= 0.72) return `${top.title} 是今天的时间主流，其他任务像支流一样辅助它前进。`;
   if (topShare <= 0.42) return "今天的时间分布比较均衡，回顾时可以记录切换任务后的精力变化。";
   return `${top.title} 仍是主要方向，但时间没有过度集中，节奏相对舒展。`;
