@@ -769,7 +769,7 @@ function renderPlanDetail(plan) {
   els.planProgressText.nextElementSibling.style.width = `${clamp(plan.progress, 0, 100)}%`;
   els.planCoreMeta.textContent = `${plan.progress}% · ${doneCount}/${plan.milestones.length} 阶段`;
   els.planUpdatedAt.textContent = plan.updatedAt ? `更新于 ${formatDateTime(plan.updatedAt)}` : "尚未更新";
-  renderMilestones(plan);
+  if (!isMilestoneFieldActive()) renderMilestones(plan);
 }
 
 function renderMilestones(plan) {
@@ -788,24 +788,53 @@ function renderMilestones(plan) {
     item.classList.toggle("is-current", index === firstPending);
     item.classList.toggle("is-pending", !milestone.done && index !== firstPending);
     item.style.setProperty("--node-delay", `${index * 120}ms`);
-    item.innerHTML = `<button class="milestone-toggle" type="button" title="完成/取消阶段目标"><span></span></button><div class="milestone-node"><input class="milestone-title-input" type="text" autocomplete="off"><small></small></div><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
+    item.innerHTML = `<button class="milestone-toggle" type="button" title="完成/取消阶段目标"><span></span></button><div class="milestone-node"><input class="milestone-title-input" type="text" autocomplete="off" aria-label="阶段目标名称"><div class="milestone-fields"><label><span>始</span><input class="milestone-date-input" data-field="startDate" type="date" aria-label="阶段开始时间"></label><label><span>止</span><input class="milestone-date-input" data-field="dueDate" type="date" aria-label="阶段结束时间"></label></div><textarea class="milestone-note-input" rows="2" placeholder="阶段笔记：阻力、产出或下一步" aria-label="阶段笔记"></textarea><small></small></div><button class="milestone-delete" type="button" title="删除阶段目标">×</button>`;
     item.querySelector(".milestone-toggle span").textContent = milestone.done ? "✓" : String(index + 1).padStart(2, "0");
     const titleInput = item.querySelector(".milestone-title-input");
+    const noteInput = item.querySelector(".milestone-note-input");
+    const startInput = item.querySelector('[data-field="startDate"]');
+    const dueInput = item.querySelector('[data-field="dueDate"]');
     titleInput.value = milestone.title;
-    item.querySelector("small").textContent = `${index + 1}/${count} · ${milestone.done ? "完成" : (index === firstPending ? "当前推进" : "待推进")}`;
+    noteInput.value = milestone.notes || "";
+    startInput.value = milestone.startDate || "";
+    dueInput.value = milestone.dueDate || "";
+    item.querySelector("small").textContent = formatMilestoneMeta(milestone, index, count, index === firstPending);
     item.querySelector(".milestone-toggle").addEventListener("click", () => toggleMilestone(plan.id, milestone.id));
+    titleInput.addEventListener("focus", () => titleInput.dataset.original = milestone.title);
     titleInput.addEventListener("input", () => saveMilestoneTitle(plan.id, milestone.id, titleInput.value));
     titleInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") titleInput.blur();
       if (event.key === "Escape") {
-        titleInput.value = milestone.title;
+        titleInput.value = titleInput.dataset.original || milestone.title;
+        saveMilestoneTitle(plan.id, milestone.id, titleInput.value);
         titleInput.blur();
       }
     });
     titleInput.addEventListener("blur", () => commitMilestoneTitle(plan.id, milestone.id, titleInput.value));
+    [startInput, dueInput].forEach((input) => {
+      input.addEventListener("change", () => saveMilestoneDetails(plan.id, milestone.id, {
+        startDate: startInput.value,
+        dueDate: dueInput.value
+      }));
+      input.addEventListener("blur", () => commitMilestoneDetails(plan.id, milestone.id, {
+        startDate: startInput.value,
+        dueDate: dueInput.value,
+        notes: noteInput.value
+      }));
+    });
+    noteInput.addEventListener("input", () => saveMilestoneDetails(plan.id, milestone.id, { notes: noteInput.value }));
+    noteInput.addEventListener("blur", () => commitMilestoneDetails(plan.id, milestone.id, {
+      startDate: startInput.value,
+      dueDate: dueInput.value,
+      notes: noteInput.value
+    }));
     item.querySelector(".milestone-delete").addEventListener("click", () => deleteMilestone(plan.id, milestone.id));
     els.milestoneList.appendChild(item);
   });
+}
+
+function isMilestoneFieldActive() {
+  return Boolean(document.activeElement?.closest?.(".milestone-title-input, .milestone-note-input, .milestone-date-input"));
 }
 
 function renderView() {
@@ -1311,7 +1340,7 @@ function addMilestone(event) {
   const plan = getActivePlan();
   const title = els.milestoneInput.value.trim();
   if (!plan || !title) return;
-  const milestone = { id: makeId(), title, done: false, createdAt: new Date().toISOString() };
+  const milestone = { id: makeId(), title, done: false, startDate: "", dueDate: "", notes: "", createdAt: new Date().toISOString() };
   plan.milestones.push(milestone);
   els.milestoneInput.value = "";
   if (plan.status === "done") plan.status = "active";
@@ -1366,9 +1395,43 @@ function commitMilestoneTitle(planId, milestoneId, title) {
   renderPlans();
 }
 
+function saveMilestoneDetails(planId, milestoneId, updates = {}) {
+  const milestone = findMilestone(planId, milestoneId);
+  if (!milestone) return;
+  if (Object.prototype.hasOwnProperty.call(updates, "startDate")) milestone.startDate = normalizeDateInput(updates.startDate);
+  if (Object.prototype.hasOwnProperty.call(updates, "dueDate")) milestone.dueDate = normalizeDateInput(updates.dueDate);
+  if (Object.prototype.hasOwnProperty.call(updates, "notes")) milestone.notes = String(updates.notes || "");
+  const plan = state.stagePlans.find((item) => item.id === planId);
+  if (plan) plan.updatedAt = new Date().toISOString();
+  saveState();
+}
+
+function commitMilestoneDetails(planId, milestoneId, updates = {}) {
+  saveMilestoneDetails(planId, milestoneId, updates);
+  renderPlans();
+}
+
 function findMilestone(planId, milestoneId) {
   const plan = state.stagePlans.find((item) => item.id === planId);
   return plan?.milestones.find((item) => item.id === milestoneId) || null;
+}
+
+function formatMilestoneMeta(milestone, index, count, current) {
+  const status = milestone.done ? "完成" : (current ? "当前推进" : "待推进");
+  const dates = formatMilestoneDates(milestone);
+  return `${index + 1}/${count} · ${status}${dates ? ` · ${dates}` : ""}`;
+}
+
+function formatMilestoneDates(milestone) {
+  if (milestone.startDate && milestone.dueDate) return `${milestone.startDate} 至 ${milestone.dueDate}`;
+  if (milestone.startDate) return `始 ${milestone.startDate}`;
+  if (milestone.dueDate) return `止 ${milestone.dueDate}`;
+  return "";
+}
+
+function normalizeDateInput(value) {
+  const text = String(value || "").trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
 }
 
 function syncPlanProgressFromMilestones(plan) {
@@ -1869,11 +1932,14 @@ function migrateMilestones(milestones, legacyGoal = "") {
       id: item.id || makeId(),
       title: String(item.title || item.goal || "未命名阶段目标"),
       done: Boolean(item.done),
+      startDate: normalizeDateInput(item.startDate),
+      dueDate: normalizeDateInput(item.dueDate),
+      notes: String(item.notes || item.note || ""),
       createdAt: item.createdAt || new Date().toISOString()
     })).slice(0, 40);
   }
   const goal = String(legacyGoal || "").trim();
-  return goal ? [{ id: makeId(), title: goal, done: false, createdAt: new Date().toISOString() }] : [];
+  return goal ? [{ id: makeId(), title: goal, done: false, startDate: "", dueDate: "", notes: "", createdAt: new Date().toISOString() }] : [];
 }
 
 function migrateSettings(settings = {}) {

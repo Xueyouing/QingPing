@@ -10,7 +10,7 @@ let dragOffset = null;
 let resizeState = null;
 let modeSwitchToken = 0;
 
-const BUBBLE_SIZE = 86;
+const BUBBLE_SIZE = 72;
 const PANEL_SIZE = { width: 520, height: 720 };
 const PANEL_MIN_SIZE = { width: 500, height: 660 };
 const VISIBLE_MARGIN = 28;
@@ -77,7 +77,21 @@ function delay(ms) {
 
 async function setWindowMode(mode) {
   if (!mainWindow || !["bubble", "panel"].includes(mode)) return windowMode;
-  if (mode === windowMode && mainWindow.isVisible()) return windowMode;
+  if (mode === windowMode && mainWindow.isVisible()) {
+    if (mode === "bubble") {
+      const current = mainWindow.getBounds();
+      if (current.width !== BUBBLE_SIZE || current.height !== BUBBLE_SIZE) {
+        mainWindow.setBounds(keepBoundsVisible({
+          x: current.x + current.width - BUBBLE_SIZE,
+          y: current.y,
+          width: BUBBLE_SIZE,
+          height: BUBBLE_SIZE
+        }), false);
+      }
+    }
+    applyWindowShape(mode);
+    return windowMode;
+  }
 
   const current = mainWindow.getBounds();
   const token = ++modeSwitchToken;
@@ -96,6 +110,7 @@ async function setWindowMode(mode) {
     mainWindow.setResizable(false);
     mainWindow.setMinimumSize(PANEL_MIN_SIZE.width, PANEL_MIN_SIZE.height);
     mainWindow.setBounds(next, false);
+    applyWindowShape("panel");
     await delay(16);
     if (!mainWindow || token !== modeSwitchToken) return windowMode;
     mainWindow.webContents.send("qingping:window:mode:commit", "panel");
@@ -114,9 +129,33 @@ async function setWindowMode(mode) {
   mainWindow.setMinimumSize(BUBBLE_SIZE, BUBBLE_SIZE);
   mainWindow.setResizable(false);
   mainWindow.setBounds(next, false);
+  applyWindowShape("bubble");
   await delay(16);
   if (mainWindow && token === modeSwitchToken) mainWindow.webContents.send("qingping:window:mode:commit", "bubble");
   return windowMode;
+}
+
+function applyWindowShape(mode) {
+  if (!mainWindow || typeof mainWindow.setShape !== "function") return;
+  try {
+    if (mode === "panel") {
+      mainWindow.setShape([]);
+      return;
+    }
+    const size = BUBBLE_SIZE;
+    const bands = [
+      { y: 0, h: 5, x: 24, w: 24 },
+      { y: 5, h: 7, x: 13, w: 46 },
+      { y: 12, h: 8, x: 7, w: 58 },
+      { y: 20, h: 32, x: 0, w: size },
+      { y: 52, h: 8, x: 7, w: 58 },
+      { y: 60, h: 7, x: 13, w: 46 },
+      { y: 67, h: 5, x: 24, w: 24 }
+    ];
+    mainWindow.setShape(bands);
+  } catch (error) {
+    console.warn("Failed to update Qingping window shape:", error);
+  }
 }
 
 function beginWindowDrag(screenX, screenY) {
