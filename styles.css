@@ -13,10 +13,14 @@
   --panel-blur: 18px;
   --panel-alpha: 0.92;
   --panel-card-alpha: 0.8;
+  --panel-bg-strong: 0.82;
+  --panel-bg-soft: 0.7;
+  --panel-wash-alpha: 0.24;
   --panel-border-alpha: 0.9;
   --panel-shadow-alpha: 0.04;
   --bubble-alpha: 0.7;
   --bubble-hover-alpha: 0.78;
+  --bubble-content-alpha: 0.82;
   --bubble-border-alpha: 0.6;
   --bubble-shadow-alpha: 0.16;
   color-scheme: light;
@@ -2579,6 +2583,7 @@ button:active {
   width: 64px;
   height: 64px;
   transform: rotate(-90deg);
+  opacity: var(--bubble-content-alpha);
 }
 
 .bubble-ring__track {
@@ -2600,6 +2605,7 @@ button:active {
   border-radius: 50%;
   object-fit: cover;
   filter: drop-shadow(0 2px 5px rgba(41, 91, 54, calc(var(--bubble-alpha) * 0.18)));
+  opacity: var(--bubble-content-alpha);
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
@@ -2618,6 +2624,7 @@ button:active {
   white-space: nowrap;
   font-size: 10px;
   font-weight: 700;
+  opacity: var(--bubble-content-alpha);
   pointer-events: none;
   user-select: none;
 }

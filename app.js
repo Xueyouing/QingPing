@@ -17,10 +17,18 @@ const THEMES = {
   violet: { green: "#8e7ad8", greenDark: "#5d4ca0", greenSoft: "#f2effb", panel: "rgba(254,252,255,.94)", wash: "#e7ddfb", accent: "#b99af2" }
 };
 const BACKGROUNDS = {
-  dew: "linear-gradient(145deg, rgba(255,255,255,.96), rgba(238,248,241,.92))",
-  violet: "radial-gradient(circle at 18% 8%, rgba(185,154,242,.3), transparent 34%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(244,239,252,.92))",
-  mist: "radial-gradient(circle at 80% 10%, rgba(121,199,216,.28), transparent 36%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(237,248,251,.92))",
-  bamboo: "radial-gradient(circle at 12% 85%, rgba(76,175,80,.2), transparent 34%), linear-gradient(145deg, rgba(255,255,255,.95), rgba(235,247,235,.92))"
+  dew: {
+    wash: "linear-gradient(145deg, rgba(255,255,255,var(--panel-bg-strong)), rgba(238,248,241,var(--panel-bg-soft)))"
+  },
+  violet: {
+    wash: "radial-gradient(circle at 18% 8%, rgba(185,154,242,var(--panel-wash-alpha)), transparent 34%), linear-gradient(145deg, rgba(255,255,255,var(--panel-bg-strong)), rgba(244,239,252,var(--panel-bg-soft)))"
+  },
+  mist: {
+    wash: "radial-gradient(circle at 80% 10%, rgba(121,199,216,var(--panel-wash-alpha)), transparent 36%), linear-gradient(145deg, rgba(255,255,255,var(--panel-bg-strong)), rgba(237,248,251,var(--panel-bg-soft)))"
+  },
+  bamboo: {
+    wash: "radial-gradient(circle at 12% 85%, rgba(76,175,80,var(--panel-wash-alpha)), transparent 34%), linear-gradient(145deg, rgba(255,255,255,var(--panel-bg-strong)), rgba(235,247,235,var(--panel-bg-soft)))"
+  }
 };
 const MOOD_LABELS = ["低落", "有点累", "平稳", "清亮", "很好"];
 const MOOD_MAP = { sad: 1, angry: 2, tired: 2, calm: 3, surprised: 4, happy: 5, done: 5, cheer: 5 };
@@ -1526,8 +1534,8 @@ function updateSettings() {
 
 function applySettings() {
   const theme = THEMES[state.settings.theme] || THEMES.green;
-  const alpha = clamp(state.settings.bubbleOpacity, 45, 95) / 100;
-  const panelAlpha = clamp(state.settings.panelOpacity, 68, 98) / 100;
+  const alpha = clamp(state.settings.bubbleOpacity, 25, 95) / 100;
+  const panelAlpha = clamp(state.settings.panelOpacity, 35, 98) / 100;
   document.documentElement.style.setProperty("--green", theme.green);
   document.documentElement.style.setProperty("--green-dark", theme.greenDark);
   document.documentElement.style.setProperty("--green-soft", theme.greenSoft);
@@ -1538,14 +1546,19 @@ function applySettings() {
   document.documentElement.style.setProperty("--bubble-hover-alpha", String(clamp(alpha + 0.08, 0.45, 0.98)));
   document.documentElement.style.setProperty("--bubble-border-alpha", String(clamp(alpha * 0.9, 0.32, 0.86)));
   document.documentElement.style.setProperty("--bubble-shadow-alpha", String(clamp(alpha * 0.24, 0.08, 0.24)));
+  document.documentElement.style.setProperty("--bubble-content-alpha", String(clamp(alpha + 0.12, 0.52, 1)));
   document.documentElement.style.setProperty("--panel-alpha", String(panelAlpha));
-  document.documentElement.style.setProperty("--panel-card-alpha", String(clamp(panelAlpha - 0.12, 0.5, 0.92)));
-  document.documentElement.style.setProperty("--panel-border-alpha", String(clamp(panelAlpha, 0.55, 0.95)));
+  document.documentElement.style.setProperty("--panel-card-alpha", String(clamp(panelAlpha - 0.2, 0.38, 0.9)));
+  document.documentElement.style.setProperty("--panel-bg-strong", String(clamp(panelAlpha - 0.1, 0.42, 0.96)));
+  document.documentElement.style.setProperty("--panel-bg-soft", String(clamp(panelAlpha - 0.22, 0.3, 0.9)));
+  document.documentElement.style.setProperty("--panel-wash-alpha", String(clamp((panelAlpha - 0.54) * 0.72, 0.08, 0.3)));
+  document.documentElement.style.setProperty("--panel-border-alpha", String(clamp(panelAlpha - 0.08, 0.42, 0.92)));
   document.documentElement.style.setProperty("--panel-shadow-alpha", String(clamp((1 - panelAlpha) * 0.42, 0.02, 0.14)));
   document.body.dataset.theme = state.settings.theme;
   const imagePath = state.settings.backgroundMode === "image" && state.settings.backgroundImagePath ? cssUrl(state.settings.backgroundImagePath) : "";
   document.documentElement.style.setProperty("--custom-bg-image", imagePath ? `url("${imagePath}")` : "none");
-  document.documentElement.style.setProperty("--panel-bg", imagePath ? `linear-gradient(rgba(255,255,255,${panelAlpha * 0.78}), rgba(255,255,255,${panelAlpha * 0.84})), url("${imagePath}") center/cover` : BACKGROUNDS[state.settings.backgroundPreset] || BACKGROUNDS.dew);
+  const preset = BACKGROUNDS[state.settings.backgroundPreset] || BACKGROUNDS.dew;
+  document.documentElement.style.setProperty("--panel-bg", imagePath ? `linear-gradient(rgba(255,255,255,${clamp(panelAlpha - 0.28, 0.32, 0.7)}), rgba(255,255,255,${clamp(panelAlpha - 0.18, 0.42, 0.8)})), url("${imagePath}") center/cover` : preset.wash);
 }
 
 function maybeNotify(body) {
@@ -1959,8 +1972,8 @@ function migrateSettings(settings = {}) {
     restTimerEnabled: settings.restTimerEnabled !== false,
     restMinutes: clamp(Number(settings.restMinutes || 5), 1, 60),
     reviewChartMode,
-    bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 45, 95),
-    panelOpacity: clamp(Number(settings.panelOpacity || 92), 68, 98),
+    bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 25, 95),
+    panelOpacity: clamp(Number(settings.panelOpacity || 92), 35, 98),
     backgroundMode: wantsImage && hasImage ? "image" : "preset",
     backgroundPreset: wantsImage && hasImage ? "image" : savedPreset,
     backgroundImagePath: settings.backgroundImagePath || "",
