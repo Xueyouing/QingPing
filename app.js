@@ -37,6 +37,8 @@ const REVIEW_COLORS = ["#42a65a", "#8e7ad8", "#3a9ab2", "#ffb74d", "#5ebd88", "#
 const DEFAULT_FOCUS_MINUTES = 45;
 const DEFAULT_FOCUS_SECONDS = DEFAULT_FOCUS_MINUTES * 60;
 const REST_SOUND_PRESETS = ["chime", "dew", "wind", "none"];
+const BUBBLE_OPACITY_RANGE = { min: 25, max: 95 };
+const PANEL_OPACITY_RANGE = { min: 35, max: 98 };
 const PLAN_STATUS = {
   active: "推进中",
   next: "下一步",
@@ -853,11 +855,11 @@ function renderView() {
 function renderSettings() {
   els.themeSelect.value = state.settings.theme;
   els.backgroundPreset.value = state.settings.backgroundMode === "image" ? "image" : state.settings.backgroundPreset;
-  els.panelOpacity.value = state.settings.panelOpacity;
+  els.panelOpacity.value = opacityToTransparency(state.settings.panelOpacity, PANEL_OPACITY_RANGE);
   els.showBubbleTimer.checked = Boolean(state.settings.showBubbleTimer);
   els.autoStart.checked = Boolean(state.settings.autoStart);
   els.systemNotify.checked = Boolean(state.settings.systemNotify);
-  els.bubbleOpacity.value = state.settings.bubbleOpacity;
+  els.bubbleOpacity.value = opacityToTransparency(state.settings.bubbleOpacity, BUBBLE_OPACITY_RANGE);
   els.restSound.value = state.settings.soundPreset;
   els.restTimerEnabled.checked = Boolean(state.settings.restTimerEnabled);
   els.restMinutes.value = state.settings.restMinutes;
@@ -1521,8 +1523,8 @@ function updateSettings() {
   state.settings.showBubbleTimer = els.showBubbleTimer.checked;
   state.settings.autoStart = els.autoStart.checked;
   state.settings.systemNotify = els.systemNotify.checked;
-  state.settings.bubbleOpacity = Number(els.bubbleOpacity.value);
-  state.settings.panelOpacity = Number(els.panelOpacity.value);
+  state.settings.bubbleOpacity = transparencyToOpacity(els.bubbleOpacity.value, BUBBLE_OPACITY_RANGE);
+  state.settings.panelOpacity = transparencyToOpacity(els.panelOpacity.value, PANEL_OPACITY_RANGE);
   state.settings.soundPreset = REST_SOUND_PRESETS.includes(els.restSound.value) ? els.restSound.value : "chime";
   state.settings.restTimerEnabled = els.restTimerEnabled.checked;
   state.settings.restMinutes = clamp(Number(els.restMinutes.value || 5), 1, 60);
@@ -1534,8 +1536,8 @@ function updateSettings() {
 
 function applySettings() {
   const theme = THEMES[state.settings.theme] || THEMES.green;
-  const alpha = clamp(state.settings.bubbleOpacity, 25, 95) / 100;
-  const panelAlpha = clamp(state.settings.panelOpacity, 35, 98) / 100;
+  const alpha = clamp(state.settings.bubbleOpacity, BUBBLE_OPACITY_RANGE.min, BUBBLE_OPACITY_RANGE.max) / 100;
+  const panelAlpha = clamp(state.settings.panelOpacity, PANEL_OPACITY_RANGE.min, PANEL_OPACITY_RANGE.max) / 100;
   document.documentElement.style.setProperty("--green", theme.green);
   document.documentElement.style.setProperty("--green-dark", theme.greenDark);
   document.documentElement.style.setProperty("--green-soft", theme.greenSoft);
@@ -1972,13 +1974,21 @@ function migrateSettings(settings = {}) {
     restTimerEnabled: settings.restTimerEnabled !== false,
     restMinutes: clamp(Number(settings.restMinutes || 5), 1, 60),
     reviewChartMode,
-    bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), 25, 95),
-    panelOpacity: clamp(Number(settings.panelOpacity || 92), 35, 98),
+    bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), BUBBLE_OPACITY_RANGE.min, BUBBLE_OPACITY_RANGE.max),
+    panelOpacity: clamp(Number(settings.panelOpacity || 92), PANEL_OPACITY_RANGE.min, PANEL_OPACITY_RANGE.max),
     backgroundMode: wantsImage && hasImage ? "image" : "preset",
     backgroundPreset: wantsImage && hasImage ? "image" : savedPreset,
     backgroundImagePath: settings.backgroundImagePath || "",
     panelBlur: clamp(Number(settings.panelBlur || 18), 8, 30)
   };
+}
+
+function opacityToTransparency(value, range) {
+  return 100 - clamp(Number(value || range.max), range.min, range.max);
+}
+
+function transparencyToOpacity(value, range) {
+  return clamp(100 - Number(value || 0), range.min, range.max);
 }
 
 function addKnownTag(tag) {
