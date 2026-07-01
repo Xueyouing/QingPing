@@ -144,13 +144,13 @@ function applyWindowShape(mode) {
     }
     const size = BUBBLE_SIZE;
     const bands = [
-      { y: 0, h: 5, x: 24, w: 24 },
-      { y: 5, h: 7, x: 13, w: 46 },
-      { y: 12, h: 8, x: 7, w: 58 },
-      { y: 20, h: 32, x: 0, w: size },
-      { y: 52, h: 8, x: 7, w: 58 },
-      { y: 60, h: 7, x: 13, w: 46 },
-      { y: 67, h: 5, x: 24, w: 24 }
+      { x: 24, y: 0, width: 24, height: 5 },
+      { x: 13, y: 5, width: 46, height: 7 },
+      { x: 7, y: 12, width: 58, height: 8 },
+      { x: 0, y: 20, width: size, height: 32 },
+      { x: 7, y: 52, width: 58, height: 8 },
+      { x: 13, y: 60, width: 46, height: 7 },
+      { x: 24, y: 67, width: 24, height: 5 }
     ];
     mainWindow.setShape(bands);
   } catch (error) {
