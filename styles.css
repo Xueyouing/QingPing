@@ -264,30 +264,25 @@ svg {
 }
 
 .bubble-pad-shade {
-  fill: color-mix(in srgb, var(--green-dark) 20%, transparent);
+  fill: color-mix(in srgb, var(--green-dark) 16%, transparent);
   stroke: none;
 }
 
 .bubble-vein {
   fill: none;
-  stroke: color-mix(in srgb, var(--green-dark) 48%, #eef9ee);
-  stroke-width: 1.8;
+  stroke: color-mix(in srgb, var(--green-dark) 42%, #eef9ee);
+  stroke-width: 1.65;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.78;
+  opacity: 0.66;
 }
 
 .bubble-water {
   fill: none;
   stroke: color-mix(in srgb, #37aeb5 58%, white);
-  stroke-width: 3;
+  stroke-width: 2.8;
   stroke-linecap: round;
-  opacity: 0.5;
-}
-
-.bubble-water-soft {
-  stroke-width: 2;
-  opacity: 0.32;
+  opacity: 0.42;
 }
 
 .bubble-dew {
@@ -2747,7 +2742,8 @@ button:active {
 }
 
 .bubble.is-timing .bubble-brand-icon {
-  display: none;
+  opacity: calc(var(--bubble-content-alpha) * 0.34);
+  filter: blur(0.2px) drop-shadow(0 1px 2px rgba(28, 80, 48, calc(var(--bubble-alpha) * 0.12)));
 }
 
 .bubble-text {
@@ -2765,23 +2761,27 @@ button:active {
 }
 
 .bubble.is-timing .bubble-text {
-  position: static;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 36px;
-  border-radius: 20px;
+  width: 62px;
+  height: 34px;
+  border-radius: 18px;
   background:
-    radial-gradient(circle at 40% 20%, rgba(255,255,255,0.78), transparent 58%),
-    rgba(255,255,255,calc(var(--bubble-alpha) * 0.78));
+    radial-gradient(circle at 44% 20%, rgba(255,255,255,0.78), transparent 58%),
+    rgba(246,255,249,calc(var(--bubble-alpha) * 0.52));
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--green) 14%, transparent),
-    0 3px 9px rgba(38, 86, 56, calc(var(--bubble-alpha) * 0.12));
+    inset 0 0 0 1px color-mix(in srgb, var(--green) 18%, transparent),
+    inset 0 -6px 12px color-mix(in srgb, var(--green) 8%, transparent);
   color: #1d5e43;
   font-size: 15px;
   line-height: 1;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
+  transform: translate(-50%, -50%);
 }
 
 @keyframes bubbleAlertPulse {
