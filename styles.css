@@ -2469,7 +2469,7 @@ button:active {
 }
 
 .is-bubble .rest-toast {
-  inset: 0;
+  inset: 4px;
   width: auto;
   grid-template-columns: 1fr;
   place-items: center;
@@ -2483,10 +2483,10 @@ button:active {
     radial-gradient(ellipse at 48% 76%, color-mix(in srgb, var(--green) 24%, transparent), transparent 50%),
     linear-gradient(145deg, rgba(247,255,249,var(--bubble-hover-alpha)), rgba(218,243,230,var(--bubble-alpha)));
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.62),
-    inset 0 -12px 22px rgba(66, 166, 90, 0.1),
-    0 0 0 4px color-mix(in srgb, var(--green) 7%, transparent),
-    0 10px 22px rgba(47, 96, 65, 0.12);
+    inset 0 0 0 1px rgba(255,255,255,0.64),
+    inset 0 -10px 18px rgba(66, 166, 90, 0.11),
+    0 0 0 4px color-mix(in srgb, var(--green) 6%, transparent),
+    0 5px 10px rgba(47, 96, 65, 0.14);
   backdrop-filter: blur(12px) saturate(1.08);
   translate: 0 0;
   cursor: grab;
@@ -2505,17 +2505,17 @@ button:active {
 }
 
 .is-bubble .rest-toast::before {
-  inset: 6px;
+  inset: 5px;
   border: 1px solid color-mix(in srgb, var(--green) 16%, transparent);
   opacity: 0.78;
   animation: bubbleRestRipple 1800ms ease-in-out infinite;
 }
 
 .is-bubble .rest-toast::after {
-  left: 16px;
-  top: 12px;
-  width: 40px;
-  height: 18px;
+  left: 12px;
+  top: 10px;
+  width: 36px;
+  height: 16px;
   background:
     radial-gradient(ellipse, rgba(255,255,255,0.78), transparent 68%),
     linear-gradient(90deg, transparent, rgba(58, 154, 178, 0.12), transparent);
@@ -2525,9 +2525,9 @@ button:active {
 .is-bubble .rest-toast .sprout {
   grid-row: auto;
   z-index: 1;
-  width: 42px;
-  height: 42px;
-  margin-top: 1px;
+  width: 38px;
+  height: 38px;
+  margin-top: 0;
   filter: drop-shadow(0 3px 5px rgba(33, 91, 57, 0.18));
   transform-origin: bottom center;
   animation: bubbleSproutRise 820ms cubic-bezier(.18, .88, .18, 1) both, sproutPop 1500ms ease-in-out 760ms infinite;
@@ -2546,11 +2546,11 @@ button:active {
   z-index: 1;
   grid-column: auto;
   min-width: 0;
-  padding: 2px 6px 3px;
+  padding: 2px 5px 3px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.76);
   color: #226247;
-  font-size: 9px;
+  font-size: 8.5px;
   line-height: 1.15;
   letter-spacing: 0;
   box-shadow: inset 0 0 0 1px rgba(66, 166, 90, 0.14);
@@ -2560,26 +2560,27 @@ button:active {
   cursor: grabbing;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.68),
-    inset 0 -12px 22px rgba(66, 166, 90, 0.12),
-    0 0 0 5px color-mix(in srgb, var(--green) 12%, transparent),
-    0 14px 26px rgba(47, 96, 65, 0.16);
+    inset 0 -10px 18px rgba(66, 166, 90, 0.14),
+    0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent),
+    0 7px 13px rgba(47, 96, 65, 0.18);
 }
 
 .is-bubble.is-resting .bubble {
   box-shadow:
-    0 0 0 8px color-mix(in srgb, var(--green) 18%, transparent),
-    0 14px 30px rgba(54, 94, 65, var(--bubble-shadow-alpha));
+    inset 0 0 0 1px rgba(255,255,255,var(--bubble-border-alpha)),
+    0 0 0 4px color-mix(in srgb, var(--green) 12%, transparent),
+    0 6px 14px rgba(54, 94, 65, var(--bubble-shadow-alpha));
 }
 
 .bubble {
   position: fixed;
-  left: 0;
-  top: 0;
+  left: 4px;
+  top: 4px;
   z-index: 20;
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   border: 0;
   background:
@@ -2589,8 +2590,8 @@ button:active {
   color: var(--green-dark);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,var(--bubble-border-alpha)),
-    inset 0 -12px 22px rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.13)),
-    0 12px 24px rgba(54, 94, 65, var(--bubble-shadow-alpha));
+    inset 0 -10px 18px rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.14)),
+    0 5px 12px rgba(54, 94, 65, var(--bubble-shadow-alpha));
   backdrop-filter: blur(18px) saturate(1.2);
   overflow: hidden;
   cursor: grab;
@@ -2608,7 +2609,7 @@ button:active {
 }
 
 .bubble::before {
-  inset: 8px;
+  inset: 6px;
   z-index: 0;
   border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
   opacity: calc(var(--bubble-content-alpha) * 0.74);
@@ -2616,11 +2617,11 @@ button:active {
 }
 
 .bubble::after {
-  left: 14px;
-  top: 13px;
+  left: 12px;
+  top: 11px;
   z-index: 1;
-  width: 35px;
-  height: 17px;
+  width: 31px;
+  height: 15px;
   border-radius: 999px;
   background:
     radial-gradient(ellipse at 30% 42%, rgba(255,255,255,0.72), transparent 62%),
@@ -2642,8 +2643,8 @@ button:active {
     linear-gradient(145deg, rgba(255,255,255,var(--bubble-hover-alpha)), rgba(221,246,232,var(--bubble-hover-alpha)));
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,var(--bubble-border-alpha)),
-    inset 0 -12px 22px rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.16)),
-    0 14px 30px rgba(54, 94, 65, var(--bubble-shadow-alpha));
+    inset 0 -10px 18px rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.16)),
+    0 7px 14px rgba(54, 94, 65, var(--bubble-shadow-alpha));
   transform: none;
 }
 
@@ -2663,16 +2664,16 @@ button:active {
     linear-gradient(145deg, rgba(255,255,255,var(--bubble-hover-alpha)), rgba(255,241,220,var(--bubble-alpha)));
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,var(--bubble-border-alpha)),
-    0 0 0 8px color-mix(in srgb, var(--accent) 22%, transparent),
-    0 12px 28px rgba(54, 94, 65, var(--bubble-shadow-alpha));
+    0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent),
+    0 6px 14px rgba(54, 94, 65, var(--bubble-shadow-alpha));
 }
 
 .bubble-ring {
   position: absolute;
-  inset: 4px;
+  inset: 1px;
   z-index: 3;
-  width: 64px;
-  height: 64px;
+  width: 62px;
+  height: 62px;
   transform: rotate(-90deg);
   opacity: var(--bubble-content-alpha);
 }
@@ -2693,8 +2694,8 @@ button:active {
 .bubble-brand-icon {
   position: relative;
   z-index: 2;
-  width: 54px;
-  height: 54px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   object-fit: cover;
   filter: drop-shadow(0 3px 7px rgba(41, 91, 54, calc(var(--bubble-alpha) * 0.2)));
@@ -2711,7 +2712,7 @@ button:active {
 .bubble-text {
   position: absolute;
   z-index: 4;
-  max-width: 58px;
+  max-width: 54px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2726,8 +2727,8 @@ button:active {
   position: static;
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 34px;
+  width: 54px;
+  height: 32px;
   border-radius: 18px;
   background:
     radial-gradient(circle at 40% 20%, rgba(255,255,255,0.78), transparent 58%),
@@ -2736,7 +2737,7 @@ button:active {
     inset 0 0 0 1px color-mix(in srgb, var(--green) 14%, transparent),
     0 3px 9px rgba(38, 86, 56, calc(var(--bubble-alpha) * 0.12));
   color: #1d5e43;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
