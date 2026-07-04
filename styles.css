@@ -2722,6 +2722,11 @@ button:active {
   width: 74px;
   height: 74px;
   transform: rotate(-90deg);
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.bubble.has-progress .bubble-ring {
   opacity: var(--bubble-content-alpha);
 }
 

@@ -877,6 +877,7 @@ function renderBubble() {
   els.bubble.classList.toggle("is-open", currentWindowMode === "panel");
   els.bubble.classList.toggle("is-alert", state.timer.running && state.timer.mode === "countdown" && state.timer.seconds <= 60);
   els.bubble.classList.toggle("is-timing", showTime);
+  els.bubble.classList.toggle("has-progress", state.timer.running);
   els.bubbleText.textContent = showTime ? formatBubbleTime(state.timer.seconds) : "";
   els.bubbleRing.style.strokeDashoffset = String(BUBBLE_RING_LENGTH * (1 - clamp(getTimerProgress(), 0, 1)));
   els.bubble.setAttribute("aria-label", task ? `${task.title} ${formatSeconds(state.timer.seconds)}` : "展开青萍");
