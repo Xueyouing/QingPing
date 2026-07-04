@@ -257,6 +257,45 @@ svg {
   stroke-width: 1.6;
 }
 
+.bubble-pad {
+  fill: color-mix(in srgb, var(--green) 78%, #dff4c8);
+  stroke: color-mix(in srgb, var(--green-dark) 82%, #123f2d);
+  stroke-width: 2.1;
+}
+
+.bubble-pad-shade {
+  fill: color-mix(in srgb, var(--green-dark) 20%, transparent);
+  stroke: none;
+}
+
+.bubble-vein {
+  fill: none;
+  stroke: color-mix(in srgb, var(--green-dark) 48%, #eef9ee);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.78;
+}
+
+.bubble-water {
+  fill: none;
+  stroke: color-mix(in srgb, #37aeb5 58%, white);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+.bubble-water-soft {
+  stroke-width: 2;
+  opacity: 0.32;
+}
+
+.bubble-dew {
+  fill: rgba(255, 255, 255, 0.72);
+  stroke: color-mix(in srgb, var(--green-dark) 25%, white);
+  stroke-width: 1.1;
+}
+
 .mood-face {
   fill: color-mix(in srgb, var(--green) 70%, white);
   stroke: var(--green-dark);
@@ -2699,9 +2738,8 @@ button:active {
   z-index: 2;
   width: 60px;
   height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-  filter: drop-shadow(0 3px 7px rgba(41, 91, 54, calc(var(--bubble-alpha) * 0.2)));
+  color: var(--green-dark);
+  filter: drop-shadow(0 2px 4px rgba(28, 80, 48, calc(var(--bubble-alpha) * 0.2)));
   opacity: var(--bubble-content-alpha);
   pointer-events: none;
   user-select: none;
