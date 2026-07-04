@@ -161,6 +161,7 @@ let currentWindowMode = "panel";
 let windowSwitchTimer = 0;
 let bubblePointer = null;
 let bubbleMoved = false;
+let bubbleDragSurface = null;
 let lastBubbleClick = 0;
 let bubbleClickTimer = 0;
 let dragFrame = 0;
@@ -173,6 +174,8 @@ let currentDayKey = todayKey();
 let dayRolloverTimer = 0;
 let restTimerId = 0;
 let restRemainingSeconds = 0;
+let restToastPointer = null;
+let restToastOffset = { x: 0, y: 0 };
 let audioContext = null;
 let focusGuardTimer = 0;
 
@@ -257,7 +260,10 @@ function bindEvents() {
     setAppWindowMode("panel");
   });
   els.restLater.addEventListener("click", hideRestToast);
-  els.restToast.addEventListener("click", onRestToastClick);
+  els.restToast.addEventListener("pointerdown", onRestToastPointerDown);
+  els.restToast.addEventListener("pointermove", onRestToastPointerMove);
+  els.restToast.addEventListener("pointerup", onRestToastPointerUp);
+  els.restToast.addEventListener("pointercancel", onRestToastPointerCancel);
   [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify, els.restSound, els.restTimerEnabled, els.restMinutes].forEach((input) => input.addEventListener("change", updateSettings));
   [els.bubbleOpacity, els.panelOpacity].forEach((input) => input.addEventListener("input", updateSettings));
   els.chooseBackground.addEventListener("click", chooseBackgroundImage);
@@ -1581,6 +1587,8 @@ function showNotice(message) {
 function showRestToast() {
   playRestSound();
   document.body.classList.add("is-resting");
+  restToastOffset = { x: 0, y: 0 };
+  applyRestToastOffset();
   els.restToast.hidden = false;
   els.restToast.classList.remove("is-leaving");
   window.clearTimeout(showRestToast.timer);
@@ -1631,13 +1639,6 @@ function renderRestCountdown() {
   els.restCountdown.textContent = `休息 ${formatSeconds(restRemainingSeconds)}`;
 }
 
-function onRestToastClick(event) {
-  if (event.target.closest("button")) return;
-  if (currentWindowMode !== "bubble") return;
-  hideRestToast();
-  setAppWindowMode("panel");
-}
-
 function playRestSound() {
   const preset = state.settings.soundPreset;
   if (preset === "none") return;
@@ -1680,10 +1681,26 @@ function playTone(frequency, startAt, duration, type = "sine", volume = 0.035) {
 }
 
 function onBubblePointerDown(event) {
+  startBubbleDrag(event, els.bubble);
+}
+
+function onRestToastPointerDown(event) {
+  if (event.target.closest("button")) return;
+  event.preventDefault();
+  if (currentWindowMode === "bubble") {
+    startBubbleDrag(event, els.restToast);
+    return;
+  }
+  startRestToastDrag(event);
+}
+
+function startBubbleDrag(event, surface) {
   bubblePointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY };
+  bubbleDragSurface = surface;
   bubbleMoved = false;
-  els.bubble.setPointerCapture(event.pointerId);
+  surface.setPointerCapture(event.pointerId);
   els.bubble.classList.add("is-dragging");
+  if (surface === els.restToast) els.restToast.classList.add("is-dragging");
   desktopBridge?.beginWindowDrag?.(event.screenX, event.screenY);
 }
 
@@ -1702,9 +1719,25 @@ function onBubblePointerMove(event) {
   }
 }
 
+function onRestToastPointerMove(event) {
+  if (restToastPointer && event.pointerId === restToastPointer.id) {
+    const dx = event.clientX - restToastPointer.startX;
+    const dy = event.clientY - restToastPointer.startY;
+    if (Math.abs(dx) + Math.abs(dy) > 3) restToastPointer.moved = true;
+    const limits = getRestToastDragLimits();
+    restToastOffset = {
+      x: clamp(restToastPointer.originX + dx, limits.minX, limits.maxX),
+      y: clamp(restToastPointer.originY + dy, limits.minY, limits.maxY)
+    };
+    applyRestToastOffset();
+    return;
+  }
+  onBubblePointerMove(event);
+}
+
 function onBubblePointerUp(event) {
   if (!bubblePointer || event.pointerId !== bubblePointer.id) return;
-  if (els.bubble.hasPointerCapture(event.pointerId)) els.bubble.releasePointerCapture(event.pointerId);
+  releaseBubblePointer(event);
   finishBubbleDrag();
   if (!bubbleMoved) {
     const now = Date.now();
@@ -1717,16 +1750,99 @@ function onBubblePointerUp(event) {
     lastBubbleClick = now;
   }
   bubblePointer = null;
+  bubbleDragSurface = null;
+}
+
+function onRestToastPointerUp(event) {
+  if (restToastPointer && event.pointerId === restToastPointer.id) {
+    releaseRestToastPointer(event);
+    finishRestToastDrag();
+    restToastPointer = null;
+    return;
+  }
+  if (!bubblePointer || event.pointerId !== bubblePointer.id) return;
+  const shouldOpen = !bubbleMoved;
+  releaseBubblePointer(event);
+  finishBubbleDrag();
+  bubblePointer = null;
+  bubbleDragSurface = null;
+  if (shouldOpen) {
+    hideRestToast();
+    setAppWindowMode("panel");
+  }
 }
 
 function onBubblePointerCancel(event) {
-  if (bubblePointer && els.bubble.hasPointerCapture(event.pointerId)) els.bubble.releasePointerCapture(event.pointerId);
+  if (bubblePointer) releaseBubblePointer(event);
   finishBubbleDrag();
   bubblePointer = null;
+  bubbleDragSurface = null;
+}
+
+function onRestToastPointerCancel(event) {
+  if (restToastPointer && event.pointerId === restToastPointer.id) {
+    releaseRestToastPointer(event);
+    finishRestToastDrag();
+    restToastPointer = null;
+    return;
+  }
+  if (bubblePointer) releaseBubblePointer(event);
+  finishBubbleDrag();
+  bubblePointer = null;
+  bubbleDragSurface = null;
+}
+
+function startRestToastDrag(event) {
+  restToastPointer = {
+    id: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    originX: restToastOffset.x,
+    originY: restToastOffset.y,
+    moved: false
+  };
+  els.restToast.setPointerCapture(event.pointerId);
+  els.restToast.classList.add("is-dragging");
+}
+
+function releaseRestToastPointer(event) {
+  if (els.restToast.hasPointerCapture?.(event.pointerId)) els.restToast.releasePointerCapture(event.pointerId);
+}
+
+function finishRestToastDrag() {
+  els.restToast.classList.remove("is-dragging");
+}
+
+function getRestToastDragLimits() {
+  const rect = els.restToast.getBoundingClientRect();
+  const margin = 10;
+  const baseLeft = (window.innerWidth - rect.width) / 2;
+  const baseTop = window.innerHeight - rect.height - 18;
+  const minX = margin - baseLeft;
+  const maxX = window.innerWidth - margin - rect.width - baseLeft;
+  const minY = margin - baseTop;
+  const maxY = window.innerHeight - margin - rect.height - baseTop;
+  return {
+    minX: Math.min(minX, maxX),
+    maxX: Math.max(minX, maxX),
+    minY: Math.min(minY, maxY),
+    maxY: Math.max(minY, maxY)
+  };
+}
+
+function applyRestToastOffset() {
+  els.restToast.style.setProperty("--rest-toast-x", `${restToastOffset.x}px`);
+  els.restToast.style.setProperty("--rest-toast-y", `${restToastOffset.y}px`);
+}
+
+function releaseBubblePointer(event) {
+  const surface = bubbleDragSurface || els.bubble;
+  if (surface.hasPointerCapture?.(event.pointerId)) surface.releasePointerCapture(event.pointerId);
 }
 
 function finishBubbleDrag() {
   els.bubble.classList.remove("is-dragging");
+  els.restToast.classList.remove("is-dragging");
   if (dragFrame) window.cancelAnimationFrame(dragFrame);
   dragFrame = 0;
   if (pendingDragPoint && desktopBridge?.dragWindowTo) desktopBridge.dragWindowTo(pendingDragPoint.x, pendingDragPoint.y);
