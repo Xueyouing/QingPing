@@ -251,12 +251,6 @@ svg {
   overflow: hidden;
 }
 
-.leaf-fill {
-  fill: color-mix(in srgb, var(--green) 76%, white);
-  stroke: var(--green-dark);
-  stroke-width: 1.6;
-}
-
 .bubble-pad {
   fill: color-mix(in srgb, var(--green) 78%, #dff4c8);
   stroke: color-mix(in srgb, var(--green-dark) 82%, #123f2d);
@@ -308,10 +302,7 @@ svg {
 .leaf-vein,
 .wind-line,
 .face-line,
-.check-line,
-.stem-line,
-.ground-line,
-.dew-shine {
+.check-line {
   fill: none;
   stroke: var(--green-dark);
   stroke-width: 2.4;
