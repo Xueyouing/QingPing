@@ -10,7 +10,7 @@ let dragOffset = null;
 let resizeState = null;
 let modeSwitchToken = 0;
 
-const BUBBLE_SIZE = 72;
+const BUBBLE_SIZE = 84;
 const PANEL_SIZE = { width: 520, height: 720 };
 const PANEL_MIN_SIZE = { width: 500, height: 660 };
 const VISIBLE_MARGIN = 28;
@@ -143,15 +143,16 @@ function applyWindowShape(mode) {
       return;
     }
     const size = BUBBLE_SIZE;
-    const bands = [
-      { x: 24, y: 0, width: 24, height: 5 },
-      { x: 13, y: 5, width: 46, height: 7 },
-      { x: 7, y: 12, width: 58, height: 8 },
-      { x: 0, y: 20, width: size, height: 32 },
-      { x: 7, y: 52, width: 58, height: 8 },
-      { x: 13, y: 60, width: 46, height: 7 },
-      { x: 24, y: 67, width: 24, height: 5 }
-    ];
+    const radius = size / 2;
+    const step = 3;
+    const bands = [];
+    for (let y = 0; y < size; y += step) {
+      const height = Math.min(step, size - y);
+      const yMid = y + height / 2;
+      const halfWidth = Math.sqrt(Math.max(0, radius * radius - (yMid - radius) ** 2));
+      const x = Math.floor(radius - halfWidth);
+      bands.push({ x, y, width: Math.ceil(halfWidth * 2), height });
+    }
     mainWindow.setShape(bands);
   } catch (error) {
     console.warn("Failed to update Qingping window shape:", error);
