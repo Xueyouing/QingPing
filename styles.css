@@ -2504,9 +2504,9 @@ button:active {
   border: 0;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 45% 22%, rgba(255,255,255,0.96), rgba(255,255,255,0.68) 34%, transparent 55%),
-    radial-gradient(ellipse at 48% 76%, color-mix(in srgb, var(--green) 24%, transparent), transparent 50%),
-    linear-gradient(145deg, rgba(247,255,249,var(--bubble-hover-alpha)), rgba(218,243,230,var(--bubble-alpha)));
+    radial-gradient(circle at 42% 18%, rgba(255,255,255,0.98), rgba(255,255,255,0.62) 35%, transparent 58%),
+    radial-gradient(ellipse at 50% 82%, color-mix(in srgb, var(--green) 28%, transparent), transparent 54%),
+    linear-gradient(145deg, rgba(248,255,250,var(--bubble-hover-alpha)), rgba(216,242,231,var(--bubble-alpha)));
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.64),
     inset 0 9px 18px rgba(255,255,255,0.45),
@@ -2530,32 +2530,37 @@ button:active {
 }
 
 .is-bubble .rest-toast::before {
-  inset: 5px;
-  border: 1px solid color-mix(in srgb, var(--green) 16%, transparent);
-  opacity: 0.78;
-  animation: bubbleRestRipple 1800ms ease-in-out infinite;
+  inset: 7px;
+  border: 1px solid color-mix(in srgb, var(--green) 18%, transparent);
+  box-shadow:
+    0 0 0 9px color-mix(in srgb, var(--green) 7%, transparent),
+    inset 0 -10px 18px rgba(58, 154, 178, 0.08);
+  opacity: 0.7;
+  animation: bubbleRestRipple 1500ms cubic-bezier(.2, .7, .28, 1) infinite;
 }
 
 .is-bubble .rest-toast::after {
-  left: 12px;
-  top: 10px;
-  width: 36px;
-  height: 16px;
+  left: 11px;
+  bottom: 12px;
+  width: 44px;
+  height: 20px;
   background:
-    radial-gradient(ellipse, rgba(255,255,255,0.78), transparent 68%),
-    linear-gradient(90deg, transparent, rgba(58, 154, 178, 0.12), transparent);
-  transform: rotate(-12deg);
+    radial-gradient(ellipse at 50% 62%, rgba(255,255,255,0.76), transparent 66%),
+    repeating-radial-gradient(ellipse at 50% 62%, rgba(58, 154, 178, 0.28) 0 1px, transparent 2px 7px);
+  opacity: 0.84;
+  transform: rotate(-4deg);
+  animation: bubbleWaterLift 1700ms ease-in-out 260ms infinite;
 }
 
 .is-bubble .rest-toast .sprout {
   grid-row: auto;
-  z-index: 1;
-  width: 54px;
-  height: 54px;
-  margin-top: -2px;
-  filter: drop-shadow(0 2px 4px rgba(33, 91, 57, 0.18));
+  z-index: 2;
+  width: 50px;
+  height: 50px;
+  margin-top: -7px;
+  filter: drop-shadow(0 3px 5px rgba(33, 91, 57, 0.18));
   transform-origin: bottom center;
-  animation: bubbleSproutRise 780ms cubic-bezier(.18, .88, .18, 1) both, sproutPop 1800ms ease-in-out 720ms infinite;
+  animation: bubbleSproutRise 720ms cubic-bezier(.17, .9, .2, 1) both, bubbleSproutFloat 1900ms ease-in-out 740ms infinite;
 }
 
 .is-bubble .rest-toast strong {
@@ -2850,12 +2855,12 @@ button:active {
 @keyframes bubbleSproutRise {
   0% {
     opacity: 0;
-    transform: translateY(24px) scale(0.62) rotate(-5deg);
+    transform: translateY(27px) scale(0.58) rotate(-4deg);
   }
 
-  58% {
+  64% {
     opacity: 1;
-    transform: translateY(-4px) scale(1.04) rotate(2deg);
+    transform: translateY(-5px) scale(1.04) rotate(1.5deg);
   }
 
   100% {
@@ -2864,16 +2869,44 @@ button:active {
   }
 }
 
-@keyframes bubbleRestRipple {
+@keyframes bubbleSproutFloat {
   0%,
   100% {
-    opacity: 0.56;
-    transform: scale(0.94);
+    transform: translateY(0) rotate(-0.8deg);
   }
 
   50% {
-    opacity: 0.9;
-    transform: scale(1.04);
+    transform: translateY(-2px) rotate(0.8deg);
+  }
+}
+
+@keyframes bubbleRestRipple {
+  0% {
+    opacity: 0.42;
+    transform: scale(0.88);
+  }
+
+  70% {
+    opacity: 0.82;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.16);
+  }
+}
+
+@keyframes bubbleWaterLift {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(0) rotate(-4deg) scaleX(0.96);
+  }
+
+  50% {
+    opacity: 0.95;
+    transform: translateY(-2px) rotate(-4deg) scaleX(1.04);
   }
 }
 
