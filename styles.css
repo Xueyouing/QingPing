@@ -2622,15 +2622,15 @@ button:active {
   border-radius: 50%;
   border: 0;
   background:
-    radial-gradient(circle at 36% 22%, rgba(255,255,255,0.96), rgba(255,255,255,0.56) 24%, transparent 42%),
-    radial-gradient(ellipse at 50% 78%, color-mix(in srgb, var(--green) 24%, transparent), transparent 52%),
-    linear-gradient(145deg, rgba(255,255,255,var(--bubble-hover-alpha)), rgba(226,246,235,var(--bubble-alpha)));
+    radial-gradient(circle at 31% 21%, rgba(255,255,255,0.98), rgba(255,255,255,0.5) 24%, transparent 44%),
+    radial-gradient(ellipse at 50% 83%, rgba(64, 176, 164, calc(var(--bubble-alpha) * 0.22)), transparent 55%),
+    linear-gradient(145deg, rgba(252,255,250,var(--bubble-hover-alpha)), rgba(223,244,234,var(--bubble-alpha)));
   color: var(--green-dark);
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,var(--bubble-border-alpha)),
-    inset 0 10px 20px rgba(255,255,255,0.42),
-    inset 0 -13px 22px rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.17)),
-    inset 0 -1px 0 color-mix(in srgb, var(--green-dark) 18%, transparent);
+    inset 0 12px 24px rgba(255,255,255,0.5),
+    inset 0 -16px 24px rgba(58, 154, 178, calc(var(--bubble-alpha) * 0.16)),
+    inset 0 -1px 0 color-mix(in srgb, var(--green-dark) 12%, transparent);
   backdrop-filter: blur(18px) saturate(1.2);
   overflow: hidden;
   outline: 0;
@@ -2651,25 +2651,26 @@ button:active {
 }
 
 .bubble::before {
-  inset: 7px;
+  inset: 9px;
   z-index: 0;
-  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
-  opacity: calc(var(--bubble-content-alpha) * 0.74);
-  transform: rotate(-12deg);
+  border: 1px solid color-mix(in srgb, #42a9aa 18%, transparent);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--green) 5%, transparent);
+  opacity: calc(var(--bubble-content-alpha) * 0.58);
+  transform: rotate(-8deg);
 }
 
 .bubble::after {
-  left: 14px;
-  top: 12px;
+  left: 12px;
+  top: 11px;
   z-index: 1;
-  width: 38px;
-  height: 17px;
+  width: 42px;
+  height: 19px;
   border-radius: 999px;
   background:
-    radial-gradient(ellipse at 30% 42%, rgba(255,255,255,0.72), transparent 62%),
-    linear-gradient(90deg, transparent, rgba(58,154,178,0.14), transparent);
-  opacity: calc(var(--bubble-content-alpha) * 0.78);
-  transform: rotate(-16deg);
+    radial-gradient(ellipse at 26% 42%, rgba(255,255,255,0.8), transparent 62%),
+    linear-gradient(90deg, transparent, rgba(58,154,178,0.11), transparent);
+  opacity: calc(var(--bubble-content-alpha) * 0.62);
+  transform: rotate(-13deg);
 }
 
 .is-panel .bubble {
@@ -2680,9 +2681,9 @@ button:active {
 .bubble.is-open,
 .bubble.is-dragging {
   background:
-    radial-gradient(circle at 36% 22%, rgba(255,255,255,0.98), rgba(255,255,255,0.62) 24%, transparent 42%),
-    radial-gradient(ellipse at 50% 78%, color-mix(in srgb, var(--green) 30%, transparent), transparent 52%),
-    linear-gradient(145deg, rgba(255,255,255,var(--bubble-hover-alpha)), rgba(221,246,232,var(--bubble-hover-alpha)));
+    radial-gradient(circle at 31% 21%, rgba(255,255,255,1), rgba(255,255,255,0.62) 24%, transparent 44%),
+    radial-gradient(ellipse at 50% 83%, rgba(64, 176, 164, calc(var(--bubble-alpha) * 0.26)), transparent 55%),
+    linear-gradient(145deg, rgba(255,255,255,var(--bubble-hover-alpha)), rgba(220,245,232,var(--bubble-hover-alpha)));
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,var(--bubble-border-alpha)),
     inset 0 10px 20px rgba(255,255,255,0.5),
@@ -2722,22 +2723,22 @@ button:active {
 
 .bubble-ring {
   position: absolute;
-  inset: 1px;
+  inset: 2px;
   z-index: 3;
-  width: 74px;
-  height: 74px;
+  width: 72px;
+  height: 72px;
   transform: rotate(-90deg);
-  opacity: var(--bubble-content-alpha);
+  opacity: calc(var(--bubble-content-alpha) * 0.46);
 }
 
 .bubble-ring__track {
-  stroke: rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.22));
-  stroke-width: 3;
+  stroke: rgba(66, 166, 90, calc(var(--bubble-alpha) * 0.11));
+  stroke-width: 2;
 }
 
 .bubble-ring__bar {
   stroke: var(--green);
-  stroke-width: 3;
+  stroke-width: 2.6;
   stroke-dasharray: 182.21;
   stroke-dashoffset: 182.21;
   transition: stroke-dashoffset 220ms ease-out;
@@ -2746,14 +2747,20 @@ button:active {
 .bubble-brand-icon {
   position: relative;
   z-index: 2;
-  width: 60px;
-  height: 60px;
-  color: var(--green-dark);
-  filter: drop-shadow(0 2px 4px rgba(28, 80, 48, calc(var(--bubble-alpha) * 0.2)));
-  opacity: var(--bubble-content-alpha);
+  width: 56px;
+  height: 56px;
+  color: transparent;
+  border-radius: 50%;
+  background: url("assets/qingping-bubble-icon.png") center / cover no-repeat;
+  filter: saturate(1.03) drop-shadow(0 3px 5px rgba(28, 80, 48, calc(var(--bubble-alpha) * 0.16)));
+  opacity: calc(var(--bubble-content-alpha) * 0.96);
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.bubble-brand-icon use {
+  display: none;
 }
 
 .bubble.is-timing .bubble-brand-icon {
