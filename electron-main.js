@@ -10,7 +10,8 @@ let dragOffset = null;
 let resizeState = null;
 let modeSwitchToken = 0;
 
-const BUBBLE_SIZE = 84;
+let bubbleSize = 84;
+const BUBBLE_SIZE_RANGE = { min: 68, max: 116 };
 const PANEL_SIZE = { width: 520, height: 720 };
 const PANEL_MIN_SIZE = { width: 500, height: 660 };
 const VISIBLE_MARGIN = 28;
@@ -80,12 +81,12 @@ async function setWindowMode(mode) {
   if (mode === windowMode && mainWindow.isVisible()) {
     if (mode === "bubble") {
       const current = mainWindow.getBounds();
-      if (current.width !== BUBBLE_SIZE || current.height !== BUBBLE_SIZE) {
+      if (current.width !== bubbleSize || current.height !== bubbleSize) {
         mainWindow.setBounds(keepBoundsVisible({
-          x: current.x + current.width - BUBBLE_SIZE,
+          x: current.x + current.width - bubbleSize,
           y: current.y,
-          width: BUBBLE_SIZE,
-          height: BUBBLE_SIZE
+          width: bubbleSize,
+          height: bubbleSize
         }), false);
       }
     }
@@ -119,14 +120,14 @@ async function setWindowMode(mode) {
     return windowMode;
   }
 
-  if (current.width > BUBBLE_SIZE || current.height > BUBBLE_SIZE) panelBounds = current;
+  if (current.width > bubbleSize || current.height > bubbleSize) panelBounds = current;
   const next = keepBoundsVisible({
-    x: current.x + current.width - BUBBLE_SIZE,
+    x: current.x + current.width - bubbleSize,
     y: current.y,
-    width: BUBBLE_SIZE,
-    height: BUBBLE_SIZE
+    width: bubbleSize,
+    height: bubbleSize
   });
-  mainWindow.setMinimumSize(BUBBLE_SIZE, BUBBLE_SIZE);
+  mainWindow.setMinimumSize(bubbleSize, bubbleSize);
   mainWindow.setResizable(false);
   mainWindow.setBounds(next, false);
   applyWindowShape("bubble");
@@ -142,7 +143,7 @@ function applyWindowShape(mode) {
       mainWindow.setShape([]);
       return;
     }
-    const size = BUBBLE_SIZE;
+    const size = bubbleSize;
     const radius = size / 2;
     const step = 3;
     const bands = [];
@@ -157,6 +158,25 @@ function applyWindowShape(mode) {
   } catch (error) {
     console.warn("Failed to update Qingping window shape:", error);
   }
+}
+
+function setBubbleSize(size) {
+  const nextSize = clamp(Math.round(Number(size || bubbleSize)), BUBBLE_SIZE_RANGE.min, BUBBLE_SIZE_RANGE.max);
+  if (nextSize === bubbleSize) return bubbleSize;
+  bubbleSize = nextSize;
+  if (!mainWindow) return bubbleSize;
+  if (windowMode === "bubble") {
+    const current = mainWindow.getBounds();
+    mainWindow.setMinimumSize(bubbleSize, bubbleSize);
+    mainWindow.setBounds(keepBoundsVisible({
+      x: Math.round(current.x + (current.width - bubbleSize) / 2),
+      y: Math.round(current.y + (current.height - bubbleSize) / 2),
+      width: bubbleSize,
+      height: bubbleSize
+    }), false);
+  }
+  applyWindowShape(windowMode);
+  return bubbleSize;
 }
 
 function beginWindowDrag(screenX, screenY) {
@@ -242,16 +262,23 @@ function endWindowResize() {
   resizeState = null;
 }
 
-async function chooseBackgroundImage() {
+async function chooseImage(title) {
   if (!mainWindow) return "";
   const result = await dialog.showOpenDialog(mainWindow, {
-    title: "选择青萍背景图片",
+    title,
     properties: ["openFile"],
     filters: [{ name: "图片", extensions: ["png", "jpg", "jpeg", "webp"] }]
   });
   return result.canceled ? "" : result.filePaths[0] || "";
 }
 
+async function chooseBackgroundImage() {
+  return chooseImage("选择青萍背景图片");
+}
+
+async function chooseBubbleImage() {
+  return chooseImage("选择青萍气泡图片");
+}
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: PANEL_SIZE.width,
@@ -345,7 +372,9 @@ ipcMain.handle("qingping:auto-start:get", () => app.getLoginItemSettings().openA
 ipcMain.handle("qingping:window:mode:set", (_event, mode) => setWindowMode(mode));
 ipcMain.handle("qingping:window:mode:get", () => windowMode);
 ipcMain.handle("qingping:window:move-by", (_event, deltaX, deltaY) => moveWindowBy(deltaX, deltaY));
+ipcMain.handle("qingping:window:bubble-size:set", (_event, size) => setBubbleSize(size));
 ipcMain.handle("qingping:background:choose", () => chooseBackgroundImage());
+ipcMain.handle("qingping:bubble-image:choose", () => chooseBubbleImage());
 
 ipcMain.on("qingping:window:drag:start", (_event, screenX, screenY) => beginWindowDrag(screenX, screenY));
 ipcMain.on("qingping:window:drag:move", (_event, screenX, screenY) => dragWindowTo(screenX, screenY));

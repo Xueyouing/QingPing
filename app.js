@@ -39,6 +39,8 @@ const DEFAULT_FOCUS_SECONDS = DEFAULT_FOCUS_MINUTES * 60;
 const REST_SOUND_PRESETS = ["chime", "dew", "wind", "none"];
 const BUBBLE_OPACITY_RANGE = { min: 25, max: 95 };
 const PANEL_OPACITY_RANGE = { min: 35, max: 98 };
+const BUBBLE_SIZE_RANGE = { min: 68, max: 116 };
+const BUBBLE_IMAGE_MODES = ["watercolor", "line", "image"];
 const PLAN_STATUS = {
   active: "推进中",
   next: "下一步",
@@ -144,6 +146,9 @@ const els = {
   autoStart: $("#autoStart"),
   systemNotify: $("#systemNotify"),
   bubbleOpacity: $("#bubbleOpacity"),
+  bubbleSize: $("#bubbleSize"),
+  bubbleImageMode: $("#bubbleImageMode"),
+  chooseBubbleImage: $("#chooseBubbleImage"),
   restSound: $("#restSound"),
   restTimerEnabled: $("#restTimerEnabled"),
   restMinutes: $("#restMinutes"),
@@ -265,8 +270,10 @@ function bindEvents() {
   els.restToast.addEventListener("pointerup", onRestToastPointerUp);
   els.restToast.addEventListener("pointercancel", onRestToastPointerCancel);
   [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify, els.restSound, els.restTimerEnabled, els.restMinutes].forEach((input) => input.addEventListener("change", updateSettings));
-  [els.bubbleOpacity, els.panelOpacity].forEach((input) => input.addEventListener("input", updateSettings));
+  [els.bubbleOpacity, els.panelOpacity, els.bubbleSize].forEach((input) => input.addEventListener("input", updateSettings));
+  els.bubbleImageMode.addEventListener("change", updateSettings);
   els.chooseBackground.addEventListener("click", chooseBackgroundImage);
+  els.chooseBubbleImage.addEventListener("click", chooseBubbleImage);
   els.bubble.addEventListener("pointerdown", onBubblePointerDown);
   els.bubble.addEventListener("pointermove", onBubblePointerMove);
   els.bubble.addEventListener("pointerup", onBubblePointerUp);
@@ -299,6 +306,9 @@ function loadState() {
       autoStart: false,
       systemNotify: true,
       bubbleOpacity: 70,
+      bubbleSize: 84,
+      bubbleImageMode: "watercolor",
+      bubbleImagePath: "",
       panelOpacity: 92,
       showBubbleTimer: true,
       soundPreset: "chime",
@@ -866,6 +876,8 @@ function renderSettings() {
   els.autoStart.checked = Boolean(state.settings.autoStart);
   els.systemNotify.checked = Boolean(state.settings.systemNotify);
   els.bubbleOpacity.value = opacityToTransparency(state.settings.bubbleOpacity, BUBBLE_OPACITY_RANGE);
+  els.bubbleSize.value = state.settings.bubbleSize;
+  els.bubbleImageMode.value = state.settings.bubbleImageMode;
   els.restSound.value = state.settings.soundPreset;
   els.restTimerEnabled.checked = Boolean(state.settings.restTimerEnabled);
   els.restMinutes.value = state.settings.restMinutes;
@@ -1522,6 +1534,19 @@ async function chooseBackgroundImage() {
   saveState();
 }
 
+async function chooseBubbleImage() {
+  if (!desktopBridge?.chooseBubbleImage) {
+    showNotice("桌面版支持选择本地气泡图片。");
+    return;
+  }
+  const filePath = await desktopBridge.chooseBubbleImage();
+  if (!filePath) return;
+  state.settings.bubbleImageMode = "image";
+  state.settings.bubbleImagePath = filePath;
+  applySettings();
+  renderSettings();
+  saveState();
+}
 function updateSettings() {
   state.settings.theme = els.themeSelect.value;
   state.settings.backgroundPreset = els.backgroundPreset.value === "image" ? state.settings.backgroundPreset : els.backgroundPreset.value;
@@ -1530,6 +1555,8 @@ function updateSettings() {
   state.settings.autoStart = els.autoStart.checked;
   state.settings.systemNotify = els.systemNotify.checked;
   state.settings.bubbleOpacity = transparencyToOpacity(els.bubbleOpacity.value, BUBBLE_OPACITY_RANGE);
+  state.settings.bubbleSize = clamp(Number(els.bubbleSize.value || 84), BUBBLE_SIZE_RANGE.min, BUBBLE_SIZE_RANGE.max);
+  state.settings.bubbleImageMode = BUBBLE_IMAGE_MODES.includes(els.bubbleImageMode.value) ? els.bubbleImageMode.value : "watercolor";
   state.settings.panelOpacity = transparencyToOpacity(els.panelOpacity.value, PANEL_OPACITY_RANGE);
   state.settings.soundPreset = REST_SOUND_PRESETS.includes(els.restSound.value) ? els.restSound.value : "chime";
   state.settings.restTimerEnabled = els.restTimerEnabled.checked;
@@ -1537,6 +1564,7 @@ function updateSettings() {
   applySettings();
   saveState();
   renderBubble();
+  desktopBridge?.setBubbleSize?.(state.settings.bubbleSize).catch(() => {});
   desktopBridge?.setAutoStart?.(state.settings.autoStart).catch(() => {});
 }
 
@@ -1544,6 +1572,8 @@ function applySettings() {
   const theme = THEMES[state.settings.theme] || THEMES.green;
   const alpha = clamp(state.settings.bubbleOpacity, BUBBLE_OPACITY_RANGE.min, BUBBLE_OPACITY_RANGE.max) / 100;
   const panelAlpha = clamp(state.settings.panelOpacity, PANEL_OPACITY_RANGE.min, PANEL_OPACITY_RANGE.max) / 100;
+  const bubbleSize = clamp(Number(state.settings.bubbleSize || 84), BUBBLE_SIZE_RANGE.min, BUBBLE_SIZE_RANGE.max);
+  const bubbleImagePath = state.settings.bubbleImageMode === "image" && state.settings.bubbleImagePath ? cssUrl(state.settings.bubbleImagePath) : "";
   document.documentElement.style.setProperty("--green", theme.green);
   document.documentElement.style.setProperty("--green-dark", theme.greenDark);
   document.documentElement.style.setProperty("--green-soft", theme.greenSoft);
@@ -1555,6 +1585,10 @@ function applySettings() {
   document.documentElement.style.setProperty("--bubble-border-alpha", String(clamp(alpha * 0.9, 0.32, 0.86)));
   document.documentElement.style.setProperty("--bubble-shadow-alpha", String(clamp(alpha * 0.24, 0.08, 0.24)));
   document.documentElement.style.setProperty("--bubble-content-alpha", String(clamp(alpha + 0.12, 0.52, 1)));
+  document.documentElement.style.setProperty("--bubble-size", `${bubbleSize}px`);
+  document.documentElement.style.setProperty("--bubble-icon-size", `${Math.round(bubbleSize * 0.74)}px`);
+  document.documentElement.style.setProperty("--bubble-ring-size", `${Math.max(0, bubbleSize - 4)}px`);
+  document.documentElement.style.setProperty("--bubble-icon-image", bubbleImagePath ? `url("${bubbleImagePath}")` : "url(\"assets/qingping-bubble-icon.png\")");
   document.documentElement.style.setProperty("--panel-alpha", String(panelAlpha));
   document.documentElement.style.setProperty("--panel-card-alpha", String(clamp(panelAlpha - 0.2, 0.38, 0.9)));
   document.documentElement.style.setProperty("--panel-bg-strong", String(clamp(panelAlpha - 0.1, 0.42, 0.96)));
@@ -1563,10 +1597,12 @@ function applySettings() {
   document.documentElement.style.setProperty("--panel-border-alpha", String(clamp(panelAlpha - 0.08, 0.42, 0.92)));
   document.documentElement.style.setProperty("--panel-shadow-alpha", String(clamp((1 - panelAlpha) * 0.42, 0.02, 0.14)));
   document.body.dataset.theme = state.settings.theme;
+  document.body.dataset.bubbleImage = state.settings.bubbleImageMode || "watercolor";
   const imagePath = state.settings.backgroundMode === "image" && state.settings.backgroundImagePath ? cssUrl(state.settings.backgroundImagePath) : "";
   document.documentElement.style.setProperty("--custom-bg-image", imagePath ? `url("${imagePath}")` : "none");
   const preset = BACKGROUNDS[state.settings.backgroundPreset] || BACKGROUNDS.dew;
   document.documentElement.style.setProperty("--panel-bg", imagePath ? `linear-gradient(rgba(255,255,255,${clamp(panelAlpha - 0.28, 0.32, 0.7)}), rgba(255,255,255,${clamp(panelAlpha - 0.18, 0.42, 0.8)})), url("${imagePath}") center/cover` : preset.wash);
+  desktopBridge?.setBubbleSize?.(bubbleSize).catch(() => {});
 }
 
 function maybeNotify(body) {
@@ -2080,6 +2116,8 @@ function migrateSettings(settings = {}) {
   const savedPreset = BACKGROUNDS[settings.backgroundPreset] ? settings.backgroundPreset : "dew";
   const activeView = normalizeViewName(settings.activeView || "today");
   const reviewChartMode = settings.reviewChartMode === "bars" ? "ripple" : (REVIEW_CHART_MODES.includes(settings.reviewChartMode) ? settings.reviewChartMode : "ring");
+  const bubbleImageMode = BUBBLE_IMAGE_MODES.includes(settings.bubbleImageMode) ? settings.bubbleImageMode : "watercolor";
+  const bubbleImagePath = settings.bubbleImagePath || "";
   return {
     ...settings,
     activeView: ["today", "focus", "knowledge", "plan"].includes(activeView) ? activeView : "today",
@@ -2091,6 +2129,9 @@ function migrateSettings(settings = {}) {
     restMinutes: clamp(Number(settings.restMinutes || 5), 1, 60),
     reviewChartMode,
     bubbleOpacity: clamp(Number(settings.bubbleOpacity || 70), BUBBLE_OPACITY_RANGE.min, BUBBLE_OPACITY_RANGE.max),
+    bubbleSize: clamp(Number(settings.bubbleSize || 84), BUBBLE_SIZE_RANGE.min, BUBBLE_SIZE_RANGE.max),
+    bubbleImageMode: bubbleImageMode === "image" && !bubbleImagePath ? "watercolor" : bubbleImageMode,
+    bubbleImagePath,
     panelOpacity: clamp(Number(settings.panelOpacity || 92), PANEL_OPACITY_RANGE.min, PANEL_OPACITY_RANGE.max),
     backgroundMode: wantsImage && hasImage ? "image" : "preset",
     backgroundPreset: wantsImage && hasImage ? "image" : savedPreset,

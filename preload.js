@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld("qingpingDesktop", {
   resizeWindowTo: (screenX, screenY) => ipcRenderer.send("qingping:window:resize:move", screenX, screenY),
   endWindowResize: () => ipcRenderer.send("qingping:window:resize:end"),
   chooseBackgroundImage: () => ipcRenderer.invoke("qingping:background:choose"),
+  chooseBubbleImage: () => ipcRenderer.invoke("qingping:bubble-image:choose"),
+  setBubbleSize: (size) => ipcRenderer.invoke("qingping:window:bubble-size:set", size),
   onWindowMode: (callback) => {
     ipcRenderer.on("qingping:window:mode", (_event, mode) => callback(mode));
   },
