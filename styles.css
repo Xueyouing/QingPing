@@ -2269,10 +2269,33 @@ button:active {
   inset: 12px;
   width: auto;
   height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--green) 34%, transparent) transparent;
 }
 
 .settings[hidden] {
   display: none;
+}
+
+.settings header {
+  position: sticky;
+  top: -12px;
+  z-index: 2;
+  margin: -12px -20px 8px -12px;
+  padding: 12px 20px 8px 12px;
+  background:
+    linear-gradient(rgba(255,255,255,var(--panel-alpha)), rgba(255,255,255,0.82)),
+    var(--panel-bg);
+  -webkit-app-region: drag;
+  cursor: grab;
+}
+
+.settings header .icon-button {
+  -webkit-app-region: no-drag;
+  cursor: pointer;
 }
 
 .settings-row {
@@ -2947,7 +2970,6 @@ textarea,
 .review-expand,
 .review-overlay,
 .review-expanded,
-.settings,
 .notice,
 .resize-zone,
 .rest-toast {
