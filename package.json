@@ -2,7 +2,7 @@
   "name": "qingping-desktop-assistant",
   "version": "0.2.0",
   "private": true,
-  "description": "青萍桌面助手：清新简约的知识型效率伴侣",
+  "description": "青萍桌面助手：清新简约的任务、专注、回顾与计划伴侣。",
   "main": "electron-main.js",
   "scripts": {
     "start": "electron .",

@@ -5,3 +5,7 @@ shot-*.png
 dist/
 out/
 .cache/
+.agents/
+.codex/
+*.local
+*.bak
