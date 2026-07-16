@@ -1,6 +1,6 @@
 {
   "name": "qingping-desktop-assistant",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "青萍桌面助手：清新简约的任务、专注、回顾与计划伴侣。",
   "author": "QingPing contributors",
@@ -19,6 +19,11 @@
     "appId": "com.qingping.desktop",
     "productName": "青萍",
     "asar": true,
+    "compression": "maximum",
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
     "directories": {
       "output": "release"
     },
