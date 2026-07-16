@@ -25,6 +25,22 @@ npm.cmd start
 npm.cmd run check
 ```
 
+## Windows 打包
+
+生成可选择安装目录、带桌面和开始菜单快捷方式的 Windows x64 安装程序：
+
+```bash
+npm.cmd run dist:win
+```
+
+安装程序输出到 `release/青萍-Setup-<版本号>-x64.exe`。如需先检查未安装版，可运行：
+
+```bash
+npm.cmd run pack:win
+```
+
+未安装版位于 `release/win-unpacked/`。`release/` 是本地构建产物，不提交到 Git。公开分发前建议为安装程序配置 Windows 代码签名；未签名版本首次运行时可能显示“未知发布者”。
+
 ## 本地数据
 
 桌面版数据保存在 Electron `userData` 目录中：

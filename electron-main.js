@@ -2,6 +2,8 @@ const { app, BrowserWindow, Menu, Tray, nativeImage, shell, ipcMain, Notificatio
 const fs = require("node:fs");
 const path = require("node:path");
 
+app.setAppUserModelId("com.qingping.desktop");
+
 let mainWindow;
 let tray;
 let windowMode = "bubble";
@@ -291,6 +293,7 @@ function createWindow() {
     skipTaskbar: true,
     resizable: true,
     show: false,
+    icon: path.join(__dirname, "assets", "qingping-bubble-icon.png"),
     backgroundColor: "#00000000",
     webPreferences: {
       contextIsolation: true,

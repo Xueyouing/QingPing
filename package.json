@@ -3,12 +3,52 @@
   "version": "0.2.0",
   "private": true,
   "description": "青萍桌面助手：清新简约的任务、专注、回顾与计划伴侣。",
+  "author": "QingPing contributors",
   "main": "electron-main.js",
   "scripts": {
     "start": "electron .",
-    "check": "node --check app.js && node --check electron-main.js && node --check preload.js"
+    "check": "node --check app.js && node --check electron-main.js && node --check preload.js",
+    "dist:win": "electron-builder --win nsis",
+    "pack:win": "electron-builder --win dir"
   },
   "devDependencies": {
-    "electron": "^42.4.0"
+    "electron": "^42.4.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.qingping.desktop",
+    "productName": "青萍",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "app.js",
+      "electron-main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "icon": "assets/qingping-bubble-icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "青萍",
+      "artifactName": "青萍-Setup-${version}-${arch}.${ext}"
+    }
   }
 }

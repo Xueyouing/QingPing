@@ -4,6 +4,7 @@ node_modules/
 shot-*.png
 dist/
 out/
+release/
 .cache/
 .agents/
 .codex/
