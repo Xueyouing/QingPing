@@ -1,14 +1,22 @@
 {
   "name": "qingping-desktop-assistant",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "private": true,
   "description": "青萍桌面助手：清新简约的任务、专注、回顾与计划伴侣。",
   "author": "QingPing contributors",
+  "license": "MIT",
+  "homepage": "https://github.com/Xueyouing/QingPing",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Xueyouing/QingPing.git"
+  },
   "main": "electron-main.js",
   "scripts": {
     "start": "electron .",
     "check": "node --check app.js && node --check electron-main.js && node --check preload.js",
     "dist:win": "electron-builder --win nsis",
+    "dist:mac": "electron-builder --mac dmg --universal",
+    "dist:linux": "electron-builder --linux AppImage --x64",
     "pack:win": "electron-builder --win dir"
   },
   "devDependencies": {
@@ -38,9 +46,37 @@
     ],
     "win": {
       "icon": "assets/qingping-bubble-icon.png",
+      "artifactName": "QingPing-V${version}-Windows-${arch}-Setup.${ext}",
       "target": [
         {
           "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "mac": {
+      "icon": "assets/qingping-lily-clock.png",
+      "category": "public.app-category.productivity",
+      "artifactName": "QingPing-V${version}-macOS-${arch}.${ext}",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "assets/qingping-lily-clock.png",
+      "category": "Utility",
+      "synopsis": "清新简约的桌面效率助手",
+      "artifactName": "QingPing-V${version}-Linux-${arch}.${ext}",
+      "target": [
+        {
+          "target": "AppImage",
           "arch": [
             "x64"
           ]
@@ -53,7 +89,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "青萍",
-      "artifactName": "青萍-Setup-${version}-${arch}.${ext}"
+      "artifactName": "QingPing-V${version}-Windows-${arch}-Setup.${ext}"
     }
   }
 }
