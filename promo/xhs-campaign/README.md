@@ -7,8 +7,9 @@
 - `output/03-focus.png`：专注计时
 - `output/04-review.png`：时间回顾
 - `output/05-plan.png`：阶段计划
-- `output/06-closing.png`：品牌收束
-- `output/00-contact-sheet.jpg`：六张总览
+- `output/06-settings.png`：设置与个性化
+- `output/07-closing.png`：品牌收束
+- `output/00-contact-sheet.jpg`：七张总览
 
 所有单张尺寸均为 `1080 × 1440`，适合小红书 3:4 竖版发布。
 

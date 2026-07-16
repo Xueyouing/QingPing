@@ -86,7 +86,7 @@ def base(page: int, accent: str = GREEN) -> tuple[Image.Image, ImageDraw.ImageDr
     icon = rounded(Image.open(ROOT / "assets" / "qingping-bubble-icon.png").convert("RGBA").resize((52, 52), Image.Resampling.LANCZOS), 16)
     bg.alpha_composite(icon, (74, 58))
     draw.text((142, 65), "青萍桌面助手", font=font(26, True), fill=color(INK))
-    draw.text((902, 67), f"{page:02d} / 06", font=font(21, True), fill=color(accent))
+    draw.text((902, 67), f"{page:02d} / 07", font=font(21, True), fill=color(accent))
     return bg, draw
 
 
@@ -220,8 +220,28 @@ def poster_plan() -> None:
     save(bg, "05-plan.png")
 
 
+def poster_settings() -> None:
+    bg, draw = base(6, VIOLET)
+    title(draw, "让每一种陪伴，\n都刚刚好", "不必适应工具，让工具适应你的桌面。", VIOLET, y=164)
+    settings = screen(SOURCE / "settings.png", 548)
+    paste_shadow(bg, settings, (468, 370), blur=44, alpha=58)
+
+    note_card(draw, (70, 428), "01", "界面", "主题配色、背景\n与面板透明度", VIOLET, width=340)
+    note_card(draw, (70, 594), "02", "气泡", "计时显示、尺寸\n透明度与自定义图片", GREEN, width=340)
+    note_card(draw, (70, 760), "03", "提醒", "结束音效、系统通知\n与休息倒计时", CYAN, width=340)
+    note_card(draw, (70, 926), "04", "数据", "本地保存记录\n需要时导出 CSV", AMBER, width=340)
+
+    bubble = rounded(Image.open(SOURCE / "bubble.png").convert("RGBA").resize((140, 140), Image.Resampling.LANCZOS), 46)
+    paste_shadow(bg, bubble, (76, 1110), blur=28, alpha=40)
+    draw.text((238, 1124), "从一枚气泡开始", font=font(27, True), fill=color(INK))
+    draw.text((238, 1168), "从主题到提醒，\n都按自己的习惯来。", font=font(20), fill=color(MUTED), spacing=8)
+    pill(draw, (238, 1248), "自由定制", VIOLET, True)
+    footer(draw)
+    save(bg, "06-settings.png")
+
+
 def poster_closing() -> None:
-    bg, draw = base(6)
+    bg, draw = base(7)
     draw.text((78, 190), "安静存在", font=font(78, True), fill=color(INK))
     draw.text((78, 286), "随时可用", font=font(78, True), fill=color(GREEN_DARK))
     draw.text((82, 395), "一枚桌面气泡，也是一段持续生长的日常。", font=font(27), fill=color(MUTED))
@@ -241,7 +261,7 @@ def poster_closing() -> None:
         x += pill(draw, (x, 1210), label, accent, filled=label == "开源") + 12
     draw.text((98, 1290), "风起于青萍之末，成长于点滴之间。", font=font(30, True), fill=color(INK))
     footer(draw, "青萍 · 清新简约的桌面效率伴侣")
-    save(bg, "06-closing.png")
+    save(bg, "07-closing.png")
 
 
 def contact_sheet() -> None:
@@ -251,15 +271,17 @@ def contact_sheet() -> None:
         "03-focus.png",
         "04-review.png",
         "05-plan.png",
-        "06-closing.png",
+        "06-settings.png",
+        "07-closing.png",
     ]
-    thumb_w, thumb_h = 270, 360
+    thumb_w, thumb_h = 246, 328
     gap = 18
-    sheet = Image.new("RGB", (thumb_w * 3 + gap * 4, thumb_h * 2 + gap * 3), (237, 247, 240))
+    columns = 4
+    sheet = Image.new("RGB", (thumb_w * columns + gap * (columns + 1), thumb_h * 2 + gap * 3), (237, 247, 240))
     for index, name in enumerate(names):
         image = Image.open(OUTPUT / name).convert("RGB").resize((thumb_w, thumb_h), Image.Resampling.LANCZOS)
-        x = gap + (index % 3) * (thumb_w + gap)
-        y = gap + (index // 3) * (thumb_h + gap)
+        x = gap + (index % columns) * (thumb_w + gap)
+        y = gap + (index // columns) * (thumb_h + gap)
         sheet.paste(image, (x, y))
     sheet.save(OUTPUT / "00-contact-sheet.jpg", quality=92, optimize=True)
 
@@ -270,6 +292,7 @@ def main() -> None:
     poster_focus()
     poster_review()
     poster_plan()
+    poster_settings()
     poster_closing()
     contact_sheet()
     print(OUTPUT)
