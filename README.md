@@ -189,4 +189,9 @@ npm run check
 
 ## 许可证
 
-项目代码和仓库内自制素材采用 [MIT License](LICENSE)。
+青萍采用双授权模式：
+
+- 开源授权：[GNU General Public License v3.0 only](LICENSE)。
+- 商业授权：如需闭源修改、商业集成、私有分发、OEM 打包或其他不适合 GPLv3 的使用方式，请参考 [Commercial License](COMMERCIAL_LICENSE.md) 与项目维护者联系。
+
+已经以 MIT License 发布过的历史版本，接收者仍可按当时版本的授权条款使用；本次授权调整适用于后续版本与后续分发。

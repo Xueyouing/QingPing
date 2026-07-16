@@ -4,7 +4,7 @@
   "private": true,
   "description": "青萍桌面助手：清新简约的任务、专注、回顾与计划伴侣。",
   "author": "QingPing contributors",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "homepage": "https://github.com/Xueyouing/QingPing",
   "repository": {
     "type": "git",
