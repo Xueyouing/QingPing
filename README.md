@@ -5,7 +5,7 @@
 青萍是一款清新、轻量的桌面效率助手。它把今日任务、专注计时、时间回顾、每日感想和阶段计划放进一个安静的悬浮面板里。平时收成一枚气泡，需要时再展开。
 
 <p align="center">
-  <img src="promo/xhs-campaign/output/01-cover.png" alt="青萍桌面助手" width="720">
+  <img src="promo/xhs-campaign/output/01-cover.png" alt="青萍桌面助手" width="420">
 </p>
 
 <p align="center">
