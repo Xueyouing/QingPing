@@ -183,6 +183,9 @@ let restRemainingSeconds = 0;
 let restToastPointer = null;
 let restToastOffset = { x: 0, y: 0 };
 let audioContext = null;
+let audioMaster = null;
+let audioReverb = null;
+let audioWet = null;
 let focusGuardTimer = 0;
 
 init();
@@ -1693,6 +1696,7 @@ async function ensureAudioContext() {
   try {
     if (!audioContext || audioContext.state === "closed") {
       audioContext = new AudioContextCtor({ latencyHint: "interactive" });
+      setupAudioGraph(audioContext);
     }
     if (audioContext.state === "suspended") await audioContext.resume();
     return audioContext.state === "running" ? audioContext : null;
@@ -1718,19 +1722,20 @@ async function playRestSound(preset = state.settings.soundPreset) {
   try {
     const now = context.currentTime + 0.04;
     if (preset === "dew") {
-      playTone(880, now, 0.24, "sine", 0.09, 1480);
-      playTone(1320, now + 0.2, 0.2, "sine", 0.058, 1880);
+      playDrop(520, 760, now, 0.3, 0.052);
+      playDrop(620, 880, now + 0.28, 0.34, 0.042);
+      playBellNote(523.25, now + 0.52, 1.12, 0.032, 0.28);
       return true;
     }
     if (preset === "wind") {
-      playTone(392, now, 0.92, "sine", 0.052, 523);
-      playTone(523, now + 0.12, 0.82, "triangle", 0.038, 659);
-      playTone(784, now + 0.34, 0.62, "sine", 0.025, 880);
+      playPadNote(261.63, now, 2.2, 0.023);
+      playPadNote(329.63, now + 0.08, 2.16, 0.019);
+      playPadNote(392, now + 0.16, 2.08, 0.016);
       return true;
     }
-    playTone(659.25, now, 0.52, "triangle", 0.082);
-    playTone(987.77, now + 0.1, 0.64, "sine", 0.062);
-    playTone(1318.51, now + 0.28, 0.76, "sine", 0.046);
+    playBellNote(392, now, 1.38, 0.064, 0.24);
+    playBellNote(587.33, now + 0.2, 1.46, 0.05, 0.3);
+    playBellNote(880, now + 0.44, 1.54, 0.034, 0.34);
     return true;
   } catch (error) {
     console.warn("Failed to play Qingping rest sound:", error);
@@ -1738,20 +1743,116 @@ async function playRestSound(preset = state.settings.soundPreset) {
   }
 }
 
-function playTone(frequency, startAt, duration, type = "sine", volume = 0.06, endFrequency = frequency) {
+function setupAudioGraph(context) {
+  audioMaster = context.createGain();
+  audioMaster.gain.value = 0.72;
+  const compressor = context.createDynamicsCompressor();
+  compressor.threshold.value = -20;
+  compressor.knee.value = 18;
+  compressor.ratio.value = 3;
+  compressor.attack.value = 0.012;
+  compressor.release.value = 0.32;
+  audioMaster.connect(compressor);
+  compressor.connect(context.destination);
+
+  const impulseLength = Math.floor(context.sampleRate * 1.35);
+  const impulse = context.createBuffer(2, impulseLength, context.sampleRate);
+  for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
+    const samples = impulse.getChannelData(channel);
+    for (let index = 0; index < impulseLength; index += 1) {
+      const envelope = (1 - index / impulseLength) ** 2.8;
+      samples[index] = (Math.random() * 2 - 1) * envelope;
+    }
+  }
+  audioReverb = context.createConvolver();
+  audioReverb.buffer = impulse;
+  audioWet = context.createGain();
+  audioWet.gain.value = 0.2;
+  audioReverb.connect(audioWet);
+  audioWet.connect(audioMaster);
+}
+
+function connectAudioVoice(node, wet = 0.2) {
+  node.connect(audioMaster);
+  if (audioReverb && wet > 0) {
+    const send = audioContext.createGain();
+    send.gain.value = wet;
+    node.connect(send);
+    send.connect(audioReverb);
+  }
+}
+
+function playBellNote(frequency, startAt, duration, volume, wet = 0.24) {
+  const partials = [
+    { ratio: 1, level: 1, detune: -1.5 },
+    { ratio: 2.01, level: 0.15, detune: 1 },
+    { ratio: 3.92, level: 0.045, detune: 2.5 }
+  ];
+  partials.forEach((partial) => {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency * partial.ratio, startAt);
+    oscillator.detune.setValueAtTime(partial.detune, startAt);
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.exponentialRampToValueAtTime(volume * partial.level, startAt + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+    oscillator.connect(gain);
+    connectAudioVoice(gain, wet);
+    oscillator.start(startAt);
+    oscillator.stop(startAt + duration + 0.04);
+  });
+}
+
+function playDrop(fromFrequency, toFrequency, startAt, duration, volume) {
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
-  oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, startAt);
-  if (endFrequency !== frequency) oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startAt + duration * 0.82);
+  const filter = audioContext.createBiquadFilter();
+  oscillator.type = "sine";
+  oscillator.frequency.setValueAtTime(fromFrequency, startAt);
+  oscillator.frequency.exponentialRampToValueAtTime(toFrequency, startAt + duration * 0.46);
+  oscillator.frequency.exponentialRampToValueAtTime(toFrequency * 0.92, startAt + duration);
+  filter.type = "lowpass";
+  filter.frequency.value = 1800;
+  filter.Q.value = 0.7;
   gain.gain.setValueAtTime(0.0001, startAt);
-  gain.gain.exponentialRampToValueAtTime(volume, startAt + Math.min(0.035, duration * 0.18));
-  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume * 0.62), startAt + duration * 0.68);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018);
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
+  oscillator.connect(filter);
+  filter.connect(gain);
+  connectAudioVoice(gain, 0.34);
   oscillator.start(startAt);
-  oscillator.stop(startAt + duration + 0.03);
+  oscillator.stop(startAt + duration + 0.04);
+}
+
+function playPadNote(frequency, startAt, duration, volume) {
+  const oscillator = audioContext.createOscillator();
+  const overtone = audioContext.createOscillator();
+  const filter = audioContext.createBiquadFilter();
+  const gain = audioContext.createGain();
+  const overtoneGain = audioContext.createGain();
+  oscillator.type = "sine";
+  oscillator.frequency.value = frequency;
+  overtone.type = "sine";
+  overtone.frequency.value = frequency * 2;
+  overtone.detune.value = 3;
+  overtoneGain.gain.value = 0.08;
+  filter.type = "lowpass";
+  filter.frequency.value = 820;
+  filter.Q.value = 0.45;
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.22);
+  gain.gain.setValueAtTime(volume, startAt + duration * 0.55);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+  oscillator.connect(filter);
+  overtone.connect(overtoneGain);
+  overtoneGain.connect(filter);
+  filter.connect(gain);
+  connectAudioVoice(gain, 0.4);
+  oscillator.start(startAt);
+  overtone.start(startAt);
+  oscillator.stop(startAt + duration + 0.05);
+  overtone.stop(startAt + duration + 0.05);
 }
 
 function onBubblePointerDown(event) {
