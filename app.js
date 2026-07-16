@@ -150,6 +150,7 @@ const els = {
   bubbleImageMode: $("#bubbleImageMode"),
   chooseBubbleImage: $("#chooseBubbleImage"),
   restSound: $("#restSound"),
+  restSoundPreview: $("#restSoundPreview"),
   restTimerEnabled: $("#restTimerEnabled"),
   restMinutes: $("#restMinutes"),
   restToast: $("#restToast"),
@@ -269,7 +270,12 @@ function bindEvents() {
   els.restToast.addEventListener("pointermove", onRestToastPointerMove);
   els.restToast.addEventListener("pointerup", onRestToastPointerUp);
   els.restToast.addEventListener("pointercancel", onRestToastPointerCancel);
-  [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify, els.restSound, els.restTimerEnabled, els.restMinutes].forEach((input) => input.addEventListener("change", updateSettings));
+  [els.themeSelect, els.backgroundPreset, els.showBubbleTimer, els.autoStart, els.systemNotify, els.restTimerEnabled, els.restMinutes].forEach((input) => input.addEventListener("change", updateSettings));
+  els.restSound.addEventListener("change", () => {
+    updateSettings();
+    void previewRestSound();
+  });
+  els.restSoundPreview.addEventListener("click", () => void previewRestSound());
   [els.bubbleOpacity, els.panelOpacity, els.bubbleSize].forEach((input) => input.addEventListener("input", updateSettings));
   els.bubbleImageMode.addEventListener("change", updateSettings);
   els.chooseBackground.addEventListener("click", chooseBackgroundImage);
@@ -287,6 +293,7 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !els.reviewOverlay.hidden) closeReviewOverlay();
   });
+  document.addEventListener("pointerdown", primeAudioContext, { once: true, capture: true });
   desktopBridge?.onWindowModePrepare?.(prepareWindowMode);
   desktopBridge?.onWindowModeCommit?.(commitWindowMode);
   if (!desktopBridge?.onWindowModeCommit) desktopBridge?.onWindowMode?.(commitWindowMode);
@@ -1086,6 +1093,7 @@ function toggleTimer() {
 function startTimer() {
   const task = getCurrentTask();
   if (!task || state.timer.running) return;
+  primeAudioContext();
   if (timerId) window.clearInterval(timerId);
   if (state.timer.mode === "countdown" && state.timer.seconds <= 0) {
     state.timer.seconds = state.timer.totalSeconds || task.minutes * 60;
@@ -1621,7 +1629,7 @@ function showNotice(message) {
 }
 
 function showRestToast() {
-  playRestSound();
+  void playRestSound();
   document.body.classList.add("is-resting");
   restToastOffset = { x: 0, y: 0 };
   applyRestToastOffset();
@@ -1675,40 +1683,70 @@ function renderRestCountdown() {
   els.restCountdown.textContent = `休息 ${formatSeconds(restRemainingSeconds)}`;
 }
 
-function playRestSound() {
-  const preset = state.settings.soundPreset;
-  if (preset === "none") return;
+function primeAudioContext() {
+  void ensureAudioContext();
+}
+
+async function ensureAudioContext() {
   const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextCtor) return;
+  if (!AudioContextCtor) return null;
   try {
-    audioContext = audioContext || new AudioContextCtor();
-    if (audioContext.state === "suspended") audioContext.resume();
-    const now = audioContext.currentTime;
-    if (preset === "dew") {
-      playTone(740, now, 0.11, "sine", 0.045);
-      playTone(980, now + 0.16, 0.12, "triangle", 0.035);
-      return;
+    if (!audioContext || audioContext.state === "closed") {
+      audioContext = new AudioContextCtor({ latencyHint: "interactive" });
     }
-    if (preset === "wind") {
-      playTone(420, now, 0.28, "sine", 0.025);
-      playTone(540, now + 0.08, 0.36, "sine", 0.022);
-      return;
-    }
-    playTone(660, now, 0.14, "triangle", 0.04);
-    playTone(880, now + 0.13, 0.18, "triangle", 0.036);
-    playTone(1320, now + 0.28, 0.2, "sine", 0.025);
+    if (audioContext.state === "suspended") await audioContext.resume();
+    return audioContext.state === "running" ? audioContext : null;
   } catch (error) {
-    console.warn("Failed to play Qingping rest sound:", error);
+    console.warn("Failed to prepare Qingping audio:", error);
+    return null;
   }
 }
 
-function playTone(frequency, startAt, duration, type = "sine", volume = 0.035) {
+async function previewRestSound() {
+  if (state.settings.soundPreset === "none") {
+    showNotice("结束音效已设为静音。");
+    return;
+  }
+  const played = await playRestSound(state.settings.soundPreset);
+  if (!played) showNotice("暂时无法播放声音，请检查系统音量后再试。");
+}
+
+async function playRestSound(preset = state.settings.soundPreset) {
+  if (preset === "none") return false;
+  const context = await ensureAudioContext();
+  if (!context) return false;
+  try {
+    const now = context.currentTime + 0.04;
+    if (preset === "dew") {
+      playTone(880, now, 0.24, "sine", 0.09, 1480);
+      playTone(1320, now + 0.2, 0.2, "sine", 0.058, 1880);
+      return true;
+    }
+    if (preset === "wind") {
+      playTone(392, now, 0.92, "sine", 0.052, 523);
+      playTone(523, now + 0.12, 0.82, "triangle", 0.038, 659);
+      playTone(784, now + 0.34, 0.62, "sine", 0.025, 880);
+      return true;
+    }
+    playTone(659.25, now, 0.52, "triangle", 0.082);
+    playTone(987.77, now + 0.1, 0.64, "sine", 0.062);
+    playTone(1318.51, now + 0.28, 0.76, "sine", 0.046);
+    return true;
+  } catch (error) {
+    console.warn("Failed to play Qingping rest sound:", error);
+    return false;
+  }
+}
+
+function playTone(frequency, startAt, duration, type = "sine", volume = 0.06, endFrequency = frequency) {
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
   oscillator.type = type;
   oscillator.frequency.setValueAtTime(frequency, startAt);
+  if (endFrequency !== frequency) oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startAt + duration * 0.82);
   gain.gain.setValueAtTime(0.0001, startAt);
-  gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.018);
+  gain.gain.exponentialRampToValueAtTime(volume, startAt + Math.min(0.035, duration * 0.18));
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume * 0.62), startAt + duration * 0.68);
   gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
   oscillator.connect(gain);
   gain.connect(audioContext.destination);
