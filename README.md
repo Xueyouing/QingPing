@@ -23,6 +23,17 @@ PC端市面上没有符合本人需求的产品：作为一个桌面气泡小工
 
 风起于青萍之末，成长于点滴之间。希望这个小工具能高效地陪伴大家的学习工作时光！
 
+
+## 界面
+
+<p align="center">
+  <img src="promo/xhs-campaign/source/today.png" alt="今日任务" width="23%">
+  <img src="promo/xhs-campaign/source/focus.png" alt="专注计时" width="23%">
+  <img src="promo/xhs-campaign/source/review-ring.png" alt="青萍环回顾" width="23%">
+  <img src="promo/xhs-campaign/source/plan-list.png" alt="阶段计划" width="23%">
+</p>
+
+
 ## 功能
 
 ### 今日任务
@@ -62,14 +73,6 @@ PC端市面上没有符合本人需求的产品：作为一个桌面气泡小工
 - 竹铃、清泉、晚风三套结束音效，可立即试听
 - 历史记录导出为 CSV
 
-## 界面
-
-<p align="center">
-  <img src="promo/xhs-campaign/source/today.png" alt="今日任务" width="23%">
-  <img src="promo/xhs-campaign/source/focus.png" alt="专注计时" width="23%">
-  <img src="promo/xhs-campaign/source/review-ring.png" alt="青萍环回顾" width="23%">
-  <img src="promo/xhs-campaign/source/plan-list.png" alt="阶段计划" width="23%">
-</p>
 
 ## 它的特点
 
