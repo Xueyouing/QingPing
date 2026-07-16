@@ -10,3 +10,5 @@ release/
 .codex/
 *.local
 *.bak
+__pycache__/
+*.pyc
