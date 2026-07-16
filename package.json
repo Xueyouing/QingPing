@@ -14,9 +14,9 @@
   "scripts": {
     "start": "electron .",
     "check": "node --check app.js && node --check electron-main.js && node --check preload.js",
-    "dist:win": "electron-builder --win nsis",
-    "dist:mac": "electron-builder --mac dmg --universal",
-    "dist:linux": "electron-builder --linux AppImage --x64",
+    "dist:win": "electron-builder --win nsis --publish never",
+    "dist:mac": "electron-builder --mac dmg --universal --publish never",
+    "dist:linux": "electron-builder --linux AppImage --x64 --publish never",
     "pack:win": "electron-builder --win dir"
   },
   "devDependencies": {
